@@ -129,14 +129,44 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 		// 获取注解的所有属性
 		AnnotationAttributes attributes = getAttributes(annotationMetadata);
 		// 获取到配置类的全路径字符串集合
+		// spring Boot在启动的时候，使用内部工具类SpringFactoriesLoader，查找classpath上所有jar包中的META-INF/spring.factories，
+		// 找出其中key为org.springframework.boot.autoconfigure.EnableAutoConfiguration的属性定义的工厂类名称，
+		// 将这些值作为自动配置类导入到容器中，自动配置类就生效了
 		List<String> configurations = getCandidateConfigurations(annotationMetadata, attributes);
 		// 去重
+		// 去除重复的配置类，若我们自己写的starter 可能存在重复的
 		configurations = removeDuplicates(configurations);
 		// 检查并排除 exclude 和 excludeName这两个属性指定的类
 		Set<String> exclusions = getExclusions(annotationMetadata, attributes);
+		// 校验排除类（exclusions指定的类必须是自动配置类，否则抛出异常）
 		checkExcludedClasses(configurations, exclusions);
+		// 从 configurations 中，移除所有不希望自动配置的配置类
 		configurations.removeAll(exclusions);
+
+		// 5. 对所有候选的自动配置类进行筛选，根据项目pom.xml文件中加入的依赖文件筛选出最终符合当前项目运行环境对应的自动配置类
+
+		//@ConditionalOnClass ： 某个class位于类路径上，才会实例化这个Bean。
+		//@ConditionalOnMissingClass ： classpath中不存在该类时起效
+		//@ConditionalOnBean ： DI容器中存在该类型Bean时起效
+		//@ConditionalOnMissingBean ： DI容器中不存在该类型Bean时起效
+		//@ConditionalOnSingleCandidate ： DI容器中该类型Bean只有一个或@Primary的只有一个时起效
+		//@ConditionalOnExpression ： SpEL表达式结果为true时
+		//@ConditionalOnProperty ： 参数设置或者值一致时起效
+		//@ConditionalOnResource ： 指定的文件存在时起效
+		//@ConditionalOnJndi ： 指定的JNDI存在时起效
+		//@ConditionalOnJava ： 指定的Java版本存在时起效
+		//@ConditionalOnWebApplication ： Web应用环境下起效
+		//@ConditionalOnNotWebApplication ： 非Web应用环境下起效
+
+		//总结一下判断是否要加载某个类的两种方式：
+		//根据spring-autoconfigure-metadata.properties进行判断。
+		//要判断@Conditional是否满足
+		// 如@ConditionalOnClass({ SqlSessionFactory.class, SqlSessionFactoryBean.class })表示需要在类路径中存在SqlSessionFactory.class、SqlSessionFactoryBean.class这两个类才能完成自动注册。
 		configurations = getConfigurationClassFilter().filter(configurations);
+
+		// 6. 将自动配置导入事件通知监听器
+		//当AutoConfigurationImportSelector过滤完成后会自动加载类路径下Jar包中META-INF/spring.factories文件中 AutoConfigurationImportListener的实现类，
+		// 并触发fireAutoConfigurationImportEvents事件。
 		fireAutoConfigurationImportEvents(configurations, exclusions);
 		return new AutoConfigurationEntry(configurations, exclusions);
 	}
