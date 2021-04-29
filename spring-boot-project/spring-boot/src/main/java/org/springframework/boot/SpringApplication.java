@@ -373,6 +373,14 @@ public class SpringApplication {
 		return context;
 	}
 
+	/**
+	 * 加载外部化配置资源到environment，包括命令行参数、servletConfigInitParams、
+	 * 	servletContextInitParams、systemProperties、sytemEnvironment、random、
+	 * 	application.yml(.yaml/.xml/.properties)等；初始化日志系统。
+	 * @param listeners
+	 * @param applicationArguments
+	 * @return
+	 */
 	private ConfigurableEnvironment prepareEnvironment(SpringApplicationRunListeners listeners,
 			ApplicationArguments applicationArguments) {
 		// Create and configure the environment
