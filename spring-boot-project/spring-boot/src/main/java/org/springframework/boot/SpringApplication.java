@@ -199,6 +199,7 @@ public class SpringApplication {
 
 	private Set<String> sources = new LinkedHashSet<>();
 
+	/** SpringBoot应用的主程序入口类 */
 	private Class<?> mainApplicationClass;
 
 	private Banner.Mode bannerMode = Banner.Mode.CONSOLE;
@@ -308,41 +309,67 @@ public class SpringApplication {
 		Collection<SpringBootExceptionReporter> exceptionReporters = new ArrayList<>();
 		// 设置jdk系统属性java.awt.headless，默认情况为true即开启
 		configureHeadlessProperty();
-		// 创建了应用的监听器SpringApplicationRunListeners并开始监听
+		// （1）创建了应用的监听器SpringApplicationRunListeners并开始监听
 		SpringApplicationRunListeners listeners = getRunListeners(args);
 		// 触发启动事件，相应的监听器会被调用
 		listeners.starting();
 		try {
+			// 创建  ApplicationArguments 对象 初始化默认应用参数类
+			// args是启动Spring应用的命令行参数，该参数可以在Spring应用中被访问。如：--server.port=9000
 			ApplicationArguments applicationArguments = new DefaultApplicationArguments(args);
+			//（2）项目运行环境Environment的预配置
+			// 创建并配置当前SpringBoot应用将要使用的Environment
+			// 并遍历调用所有的SpringApplicationRunListener的environmentPrepared()方法
 			ConfigurableEnvironment environment = prepareEnvironment(listeners, applicationArguments);
 			configureIgnoreBeanInfo(environment);
 			Banner printedBanner = printBanner(environment);
-			// 根据应用类型来创建相应的 应用上下文
+			// 根据应用类型来创建相应的 应用上下文（Spring容器）
 			context = createApplicationContext();
+			// 获得异常报告器 SpringBootExceptionReporter 数组
+			//这一步的逻辑和实例化初始化器和监听器的一样，
+			// 都是通过调用 getSpringFactoriesInstances 方法来获取配置的异常类名称并实例化所有的异常处理类。
 			exceptionReporters = getSpringFactoriesInstances(SpringBootExceptionReporter.class,
 					new Class[] { ConfigurableApplicationContext.class }, context);
+			// （4）Spring容器前置处理
+			//这一步主要是在容器刷新之前的准备动作。包含一个非常关键的操作：将启动类注入容器，为后续开启自动化配置奠定基础。
 			prepareContext(context, environment, listeners, applicationArguments, printedBanner);
+			// （5）：刷新容器
 			refreshContext(context);
+			// （6）：Spring容器后置处理
+			//扩展接口，设计模式中的模板方法，默认为空实现。
+			// 如果有自定义需求，可以重写该方法。比如打印一些启动结束log，或者一些其它后置处理
 			afterRefresh(context, applicationArguments);
 			stopWatch.stop();
+			// 打印 Spring Boot 启动的时长日志。
 			if (this.logStartupInfo) {
 				new StartupInfoLogger(this.mainApplicationClass).logStarted(getApplicationLog(), stopWatch);
 			}
+			// （7）发出结束执行的事件通知
 			listeners.started(context);
+			// （8）：执行Runners
+			//用于调用项目中自定义的执行器XxxRunner类，使得在项目启动完成后立即执行一些特定程序
+			//Runner 运行器用于在服务启动时进行一些业务初始化操作，这些操作只在服务启动后执行一次。
+			//Spring Boot提供了ApplicationRunner和CommandLineRunner两种服务接口
 			callRunners(context, applicationArguments);
 		}
 		catch (Throwable ex) {
+			// 如果发生异常，则进行处理，并抛出 IllegalStateException 异常
 			handleRunFailure(context, ex, exceptionReporters, listeners);
 			throw new IllegalStateException(ex);
 		}
 
 		try {
+			//   (9)发布应用上下文就绪事件
+			//表示在前面一切初始化启动都没有问题的情况下，使用运行监听器SpringApplicationRunListener持续运行配置好的应用上下文ApplicationContext，
+			// 这样整个Spring Boot项目就正式启动完成了。
 			listeners.running(context);
 		}
 		catch (Throwable ex) {
+			// 如果发生异常，则进行处理，并抛出 IllegalStateException 异常
 			handleRunFailure(context, ex, exceptionReporters, null);
 			throw new IllegalStateException(ex);
 		}
+		// 返回容器
 		return context;
 	}
 
@@ -375,15 +402,19 @@ public class SpringApplication {
 
 	private void prepareContext(ConfigurableApplicationContext context, ConfigurableEnvironment environment,
 			SpringApplicationRunListeners listeners, ApplicationArguments applicationArguments, Banner printedBanner) {
-		context.setEnvironment(environment);
+		context.setEnvironment(environment); // 设置容器环境，包括各种变量
+		// 后置处理应用上下文: 设置上下文的 bean 生成器和资源加载器等等
 		postProcessApplicationContext(context);
+		// 执行容器中的ApplicationContextInitializer（包括 spring.factories和自定义的实例）
 		applyInitializers(context);
+		// 触发所有 SpringApplicationRunListener 监听器的 contextPrepared 事件方法
 		listeners.contextPrepared(context);
-		if (this.logStartupInfo) {
+		if (this.logStartupInfo) { // 记录启动日志
 			logStartupInfo(context.getParent() == null);
 			logStartupProfileInfo(context);
 		}
 		// Add boot specific singleton beans
+		// 注册启动参数bean，这里将容器指定的参数封装成bean，注入容器
 		ConfigurableListableBeanFactory beanFactory = context.getBeanFactory();
 		beanFactory.registerSingleton("springApplicationArguments", applicationArguments);
 		if (printedBanner != null) {
@@ -397,21 +428,29 @@ public class SpringApplication {
 			context.addBeanFactoryPostProcessor(new LazyInitializationBeanFactoryPostProcessor());
 		}
 		// Load the sources
+		// 加载所有资源
 		Set<Object> sources = getAllSources();
 		Assert.notEmpty(sources, "Sources must not be empty");
+		// 加载我们的启动类，将启动类注入容器,为后续开启自动化配置奠定基础
 		load(context, sources.toArray(new Object[0]));
+		// 触发所有 SpringApplicationRunListener 监听器的 contextLoaded 事件方法
 		listeners.contextLoaded(context);
+
+		//这块会对整个上下文进行一个预处理，比如触发监听器的响应事件、加载资源、设置上下文环境等等
 	}
 
 	private void refreshContext(ConfigurableApplicationContext context) {
+		// 注册 ShutdownHook 钩子
 		if (this.registerShutdownHook) {
 			try {
+				// 向JVM运行时注册一个关机钩子，在JVM关机时关闭这个上下文，除非它当时已经关闭
 				context.registerShutdownHook();
 			}
 			catch (AccessControlException ex) {
 				// Not allowed in some environments.
 			}
 		}
+		// 开启（刷新）Spring 容器,通过refresh方法对整个IoC容器的初始化（包括Bean资源的定位、解析、注册等等）
 		refresh((ApplicationContext) context);
 	}
 
