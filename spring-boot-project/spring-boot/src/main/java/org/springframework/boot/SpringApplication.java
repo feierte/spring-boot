@@ -384,11 +384,15 @@ public class SpringApplication {
 	private ConfigurableEnvironment prepareEnvironment(SpringApplicationRunListeners listeners,
 			ApplicationArguments applicationArguments) {
 		// Create and configure the environment
+		// 获取或创建环境（存在就直接返回，不存在创建一个再返回）
 		ConfigurableEnvironment environment = getOrCreateEnvironment();
+		// 配置环境：配置PropertySources和active Profiles
 		configureEnvironment(environment, applicationArguments.getSourceArgs());
 		ConfigurationPropertySources.attach(environment);
 		listeners.environmentPrepared(environment);
+		// 将环境绑定到SpringApplication
 		bindToSpringApplication(environment);
+		// 如果非web环境，将环境转换成StandardEnvironment
 		if (!this.isCustomEnvironment) {
 			environment = new EnvironmentConverter(getClassLoader()).convertEnvironmentIfNecessary(environment,
 					deduceEnvironmentClass());
