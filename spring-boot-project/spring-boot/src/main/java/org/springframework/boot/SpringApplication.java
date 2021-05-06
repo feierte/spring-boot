@@ -309,7 +309,7 @@ public class SpringApplication {
 		Collection<SpringBootExceptionReporter> exceptionReporters = new ArrayList<>();
 		// 设置jdk系统属性java.awt.headless，默认情况为true即开启
 		configureHeadlessProperty();
-		// （1）创建了应用的监听器SpringApplicationRunListeners并开始监听
+		// （1）创建了应用的监听器SpringApplicationRunListeners  并开始监听
 		SpringApplicationRunListeners listeners = getRunListeners(args);
 		// 触发启动事件，相应的监听器会被调用
 		listeners.starting();
@@ -323,6 +323,7 @@ public class SpringApplication {
 			ConfigurableEnvironment environment = prepareEnvironment(listeners, applicationArguments);
 			configureIgnoreBeanInfo(environment);
 			Banner printedBanner = printBanner(environment);
+			// （3）创建Spring容器
 			// 根据应用类型来创建相应的 应用上下文（Spring容器）
 			context = createApplicationContext();
 			// 获得异常报告器 SpringBootExceptionReporter 数组
@@ -389,6 +390,7 @@ public class SpringApplication {
 		// 配置环境：配置PropertySources和active Profiles
 		configureEnvironment(environment, applicationArguments.getSourceArgs());
 		ConfigurationPropertySources.attach(environment);
+		// listeners环境准备（就是广播ApplicationEnvironmentPreparedEvent事件）
 		listeners.environmentPrepared(environment);
 		// 将环境绑定到SpringApplication
 		bindToSpringApplication(environment);
@@ -397,6 +399,8 @@ public class SpringApplication {
 			environment = new EnvironmentConverter(getClassLoader()).convertEnvironmentIfNecessary(environment,
 					deduceEnvironmentClass());
 		}
+		// 配置PropertySources对它自己的递归依赖
+		// 如果有attach到environment上的MutablePropertySources，则添加到environment的PropertySource中
 		ConfigurationPropertySources.attach(environment);
 		return environment;
 	}
@@ -484,8 +488,11 @@ public class SpringApplication {
 	private <T> Collection<T> getSpringFactoriesInstances(Class<T> type, Class<?>[] parameterTypes, Object... args) {
 		ClassLoader classLoader = getClassLoader();
 		// Use names and ensure unique to protect against duplicates
+		// 加载指定类型在"META-INF/spring.factories"里对应的类名的数组
 		Set<String> names = new LinkedHashSet<>(SpringFactoriesLoader.loadFactoryNames(type, classLoader));
+		// 根据names来进行实例化
 		List<T> instances = createSpringFactoriesInstances(type, parameterTypes, classLoader, args, names);
+		// 对实例进行排序
 		AnnotationAwareOrderComparator.sort(instances);
 		return instances;
 	}
@@ -1295,6 +1302,8 @@ public class SpringApplication {
 	 * @return the running {@link ApplicationContext}
 	 */
 	public static ConfigurableApplicationContext run(Class<?>[] primarySources, String[] args) {
+		// 1、实例化SpringApplication对象
+		// 2、调用实例对象中的run(args)方法
 		return new SpringApplication(primarySources).run(args);
 	}
 
