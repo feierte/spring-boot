@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.springframework.boot.actuate.env;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,9 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import org.springframework.boot.actuate.endpoint.SanitizableData;
 import org.springframework.boot.actuate.endpoint.Sanitizer;
+import org.springframework.boot.actuate.endpoint.SanitizingFunction;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.boot.actuate.endpoint.annotation.Selector;
@@ -44,6 +47,7 @@ import org.springframework.core.env.MutablePropertySources;
 import org.springframework.core.env.PropertySource;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.lang.Nullable;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.PropertyPlaceholderHelper;
 import org.springframework.util.StringUtils;
 import org.springframework.util.SystemPropertyUtils;
@@ -63,16 +67,25 @@ import org.springframework.util.SystemPropertyUtils;
 @Endpoint(id = "env")
 public class EnvironmentEndpoint {
 
-	private final Sanitizer sanitizer = new Sanitizer();
+	private final Sanitizer sanitizer;
 
 	private final Environment environment;
 
 	public EnvironmentEndpoint(Environment environment) {
+		this(environment, Collections.emptyList());
+	}
+
+	public EnvironmentEndpoint(Environment environment, Iterable<SanitizingFunction> sanitizingFunctions) {
 		this.environment = environment;
+		this.sanitizer = new Sanitizer(sanitizingFunctions);
 	}
 
 	public void setKeysToSanitize(String... keysToSanitize) {
 		this.sanitizer.setKeysToSanitize(keysToSanitize);
+	}
+
+	public void keysToSanitize(String... keysToSanitize) {
+		this.sanitizer.keysToSanitize(keysToSanitize);
 	}
 
 	@ReadOperation
@@ -144,7 +157,8 @@ public class EnvironmentEndpoint {
 			PlaceholdersResolver resolver) {
 		Object resolved = resolver.resolvePlaceholders(source.getProperty(name));
 		Origin origin = ((source instanceof OriginLookup) ? ((OriginLookup<Object>) source).getOrigin(name) : null);
-		return new PropertyValueDescriptor(stringifyIfNecessary(sanitize(name, resolved)), origin);
+		Object sanitizedValue = sanitize(source, name, resolved);
+		return new PropertyValueDescriptor(stringifyIfNecessary(sanitizedValue), origin);
 	}
 
 	private PlaceholdersResolver getResolver() {
@@ -179,12 +193,26 @@ public class EnvironmentEndpoint {
 		}
 	}
 
-	public Object sanitize(String name, Object object) {
-		return this.sanitizer.sanitize(name, object);
+	/**
+	 * Apply sanitization to the given name and value.
+	 * @param key the name to sanitize
+	 * @param value the value to sanitize
+	 * @return the sanitized value
+	 * @deprecated since 2.6.0 for removal in 2.8.0 as sanitization should be internal to
+	 * the class
+	 */
+	@Deprecated
+	public Object sanitize(String key, Object value) {
+		return this.sanitizer.sanitize(key, value);
+	}
+
+	private Object sanitize(PropertySource<?> source, String name, Object value) {
+		return this.sanitizer.sanitize(new SanitizableData(source, name, value));
 	}
 
 	protected Object stringifyIfNecessary(Object value) {
-		if (value == null || value.getClass().isPrimitive()) {
+		if (value == null || ClassUtils.isPrimitiveOrWrapper(value.getClass())
+				|| Number.class.isAssignableFrom(value.getClass())) {
 			return value;
 		}
 		if (CharSequence.class.isAssignableFrom(value.getClass())) {
@@ -201,19 +229,28 @@ public class EnvironmentEndpoint {
 
 		private final Sanitizer sanitizer;
 
+		private final Iterable<PropertySource<?>> sources;
+
 		PropertySourcesPlaceholdersSanitizingResolver(Iterable<PropertySource<?>> sources, Sanitizer sanitizer) {
 			super(sources, new PropertyPlaceholderHelper(SystemPropertyUtils.PLACEHOLDER_PREFIX,
 					SystemPropertyUtils.PLACEHOLDER_SUFFIX, SystemPropertyUtils.VALUE_SEPARATOR, true));
+			this.sources = sources;
 			this.sanitizer = sanitizer;
 		}
 
 		@Override
 		protected String resolvePlaceholder(String placeholder) {
-			String value = super.resolvePlaceholder(placeholder);
-			if (value == null) {
-				return null;
+			if (this.sources != null) {
+				for (PropertySource<?> source : this.sources) {
+					Object value = source.getProperty(placeholder);
+					if (value != null) {
+						SanitizableData data = new SanitizableData(source, placeholder, value);
+						Object sanitized = this.sanitizer.sanitize(data);
+						return (sanitized != null) ? String.valueOf(sanitized) : null;
+					}
+				}
 			}
-			return (String) this.sanitizer.sanitize(placeholder, value);
+			return null;
 		}
 
 	}

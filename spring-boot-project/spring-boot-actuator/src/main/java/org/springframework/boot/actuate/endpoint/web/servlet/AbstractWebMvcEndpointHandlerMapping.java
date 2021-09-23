@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.actuate.endpoint.InvalidEndpointRequestException;
 import org.springframework.boot.actuate.endpoint.InvocationContext;
+import org.springframework.boot.actuate.endpoint.OperationArgumentResolver;
+import org.springframework.boot.actuate.endpoint.ProducibleOperationArgumentResolver;
 import org.springframework.boot.actuate.endpoint.SecurityContext;
-import org.springframework.boot.actuate.endpoint.http.ApiVersion;
 import org.springframework.boot.actuate.endpoint.invoke.OperationInvoker;
 import org.springframework.boot.actuate.endpoint.web.EndpointMapping;
 import org.springframework.boot.actuate.endpoint.web.EndpointMediaTypes;
@@ -41,9 +42,12 @@ import org.springframework.boot.actuate.endpoint.web.ExposableWebEndpoint;
 import org.springframework.boot.actuate.endpoint.web.WebEndpointResponse;
 import org.springframework.boot.actuate.endpoint.web.WebOperation;
 import org.springframework.boot.actuate.endpoint.web.WebOperationRequestPredicate;
+import org.springframework.boot.actuate.endpoint.web.WebServerNamespace;
+import org.springframework.boot.web.context.WebServerApplicationContext;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.util.AntPathMatcher;
@@ -53,15 +57,17 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.context.support.WebApplicationContextUtils;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.handler.MatchableHandlerMapping;
 import org.springframework.web.servlet.handler.RequestMatchResult;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfoHandlerMapping;
-import org.springframework.web.util.UrlPathHelper;
+import org.springframework.web.util.pattern.PathPatternParser;
 
 /**
  * A custom {@link HandlerMapping} that makes {@link ExposableWebEndpoint web endpoints}
@@ -89,7 +95,7 @@ public abstract class AbstractWebMvcEndpointHandlerMapping extends RequestMappin
 	private final Method handleMethod = ReflectionUtils.findMethod(OperationHandler.class, "handle",
 			HttpServletRequest.class, Map.class);
 
-	private static final RequestMappingInfo.BuilderConfiguration builderConfig = getBuilderConfig();
+	private RequestMappingInfo.BuilderConfiguration builderConfig = new RequestMappingInfo.BuilderConfiguration();
 
 	/**
 	 * Creates a new {@code WebEndpointHandlerMapping} that provides mappings for the
@@ -117,12 +123,46 @@ public abstract class AbstractWebMvcEndpointHandlerMapping extends RequestMappin
 	public AbstractWebMvcEndpointHandlerMapping(EndpointMapping endpointMapping,
 			Collection<ExposableWebEndpoint> endpoints, EndpointMediaTypes endpointMediaTypes,
 			CorsConfiguration corsConfiguration, boolean shouldRegisterLinksMapping) {
+		this(endpointMapping, endpoints, endpointMediaTypes, corsConfiguration, shouldRegisterLinksMapping, null);
+	}
+
+	/**
+	 * Creates a new {@code AbstractWebMvcEndpointHandlerMapping} that provides mappings
+	 * for the operations of the given endpoints.
+	 * @param endpointMapping the base mapping for all endpoints
+	 * @param endpoints the web endpoints
+	 * @param endpointMediaTypes media types consumed and produced by the endpoints
+	 * @param corsConfiguration the CORS configuration for the endpoints or {@code null}
+	 * @param shouldRegisterLinksMapping whether the links endpoint should be registered
+	 * @param pathPatternParser the path pattern parser
+	 */
+	public AbstractWebMvcEndpointHandlerMapping(EndpointMapping endpointMapping,
+			Collection<ExposableWebEndpoint> endpoints, EndpointMediaTypes endpointMediaTypes,
+			CorsConfiguration corsConfiguration, boolean shouldRegisterLinksMapping,
+			PathPatternParser pathPatternParser) {
 		this.endpointMapping = endpointMapping;
 		this.endpoints = endpoints;
 		this.endpointMediaTypes = endpointMediaTypes;
 		this.corsConfiguration = corsConfiguration;
 		this.shouldRegisterLinksMapping = shouldRegisterLinksMapping;
+		setPatternParser(pathPatternParser);
 		setOrder(-100);
+	}
+
+	@Override
+	@SuppressWarnings("deprecation")
+	public void afterPropertiesSet() {
+		this.builderConfig = new RequestMappingInfo.BuilderConfiguration();
+		if (getPatternParser() != null) {
+			this.builderConfig.setPatternParser(getPatternParser());
+		}
+		else {
+			this.builderConfig.setPathMatcher(null);
+			this.builderConfig.setTrailingSlashMatch(true);
+			this.builderConfig.setSuffixPatternMatch(false);
+
+		}
+		super.afterPropertiesSet();
 	}
 
 	@Override
@@ -145,7 +185,8 @@ public abstract class AbstractWebMvcEndpointHandlerMapping extends RequestMappin
 
 	@Override
 	public RequestMatchResult match(HttpServletRequest request, String pattern) {
-		RequestMappingInfo info = RequestMappingInfo.paths(pattern).options(builderConfig).build();
+		Assert.isNull(getPatternParser(), "This HandlerMapping uses PathPatterns.");
+		RequestMappingInfo info = RequestMappingInfo.paths(pattern).options(this.builderConfig).build();
 		RequestMappingInfo matchingInfo = info.getMatchingCondition(request);
 		if (matchingInfo == null) {
 			return null;
@@ -155,15 +196,6 @@ public abstract class AbstractWebMvcEndpointHandlerMapping extends RequestMappin
 		return new RequestMatchResult(patterns.iterator().next(), lookupPath, getPathMatcher());
 	}
 
-	@SuppressWarnings("deprecation")
-	private static RequestMappingInfo.BuilderConfiguration getBuilderConfig() {
-		RequestMappingInfo.BuilderConfiguration config = new RequestMappingInfo.BuilderConfiguration();
-		config.setPathMatcher(null);
-		config.setSuffixPatternMatch(false);
-		config.setTrailingSlashMatch(true);
-		return config;
-	}
-
 	private void registerMappingForOperation(ExposableWebEndpoint endpoint, WebOperation operation) {
 		WebOperationRequestPredicate predicate = operation.getRequestPredicate();
 		String path = predicate.getPath();
@@ -171,6 +203,11 @@ public abstract class AbstractWebMvcEndpointHandlerMapping extends RequestMappin
 		if (matchAllRemainingPathSegmentsVariable != null) {
 			path = path.replace("{*" + matchAllRemainingPathSegmentsVariable + "}", "**");
 		}
+		registerMapping(endpoint, predicate, operation, path);
+	}
+
+	protected void registerMapping(ExposableWebEndpoint endpoint, WebOperationRequestPredicate predicate,
+			WebOperation operation, String path) {
 		ServletWebOperation servletWebOperation = wrapServletWebOperation(endpoint, operation,
 				new ServletWebOperationAdapter(operation));
 		registerMapping(createRequestMappingInfo(predicate, path), new OperationHandler(servletWebOperation),
@@ -191,7 +228,7 @@ public abstract class AbstractWebMvcEndpointHandlerMapping extends RequestMappin
 	}
 
 	private RequestMappingInfo createRequestMappingInfo(WebOperationRequestPredicate predicate, String path) {
-		return RequestMappingInfo.paths(this.endpointMapping.createSubPath(path))
+		return RequestMappingInfo.paths(this.endpointMapping.createSubPath(path)).options(this.builderConfig)
 				.methods(RequestMethod.valueOf(predicate.getHttpMethod().name()))
 				.consumes(predicate.getConsumes().toArray(new String[0]))
 				.produces(predicate.getProduces().toArray(new String[0])).build();
@@ -200,7 +237,7 @@ public abstract class AbstractWebMvcEndpointHandlerMapping extends RequestMappin
 	private void registerLinksMapping() {
 		RequestMappingInfo mapping = RequestMappingInfo.paths(this.endpointMapping.createSubPath(""))
 				.methods(RequestMethod.GET).produces(this.endpointMediaTypes.getProduced().toArray(new String[0]))
-				.options(builderConfig).build();
+				.options(this.builderConfig).build();
 		LinksHandler linksHandler = getLinksHandler();
 		registerMapping(mapping, linksHandler, ReflectionUtils.findMethod(linksHandler.getClass(), "links",
 				HttpServletRequest.class, HttpServletResponse.class));
@@ -284,13 +321,22 @@ public abstract class AbstractWebMvcEndpointHandlerMapping extends RequestMappin
 			HttpHeaders headers = new ServletServerHttpRequest(request).getHeaders();
 			Map<String, Object> arguments = getArguments(request, body);
 			try {
-				ApiVersion apiVersion = ApiVersion.fromHttpHeaders(headers);
 				ServletSecurityContext securityContext = new ServletSecurityContext(request);
-				InvocationContext invocationContext = new InvocationContext(apiVersion, securityContext, arguments);
+				ProducibleOperationArgumentResolver producibleOperationArgumentResolver = new ProducibleOperationArgumentResolver(
+						() -> headers.get("Accept"));
+				OperationArgumentResolver serverNamespaceArgumentResolver = OperationArgumentResolver
+						.of(WebServerNamespace.class, () -> {
+							WebApplicationContext applicationContext = WebApplicationContextUtils
+									.getRequiredWebApplicationContext(request.getServletContext());
+							return WebServerNamespace
+									.from(WebServerApplicationContext.getServerNamespace(applicationContext));
+						});
+				InvocationContext invocationContext = new InvocationContext(securityContext, arguments,
+						serverNamespaceArgumentResolver, producibleOperationArgumentResolver);
 				return handleResult(this.operation.invoke(invocationContext), HttpMethod.resolve(request.getMethod()));
 			}
 			catch (InvalidEndpointRequestException ex) {
-				throw new BadOperationRequestException(ex.getReason());
+				throw new InvalidEndpointBadRequestException(ex);
 			}
 		}
 
@@ -315,7 +361,7 @@ public abstract class AbstractWebMvcEndpointHandlerMapping extends RequestMappin
 		}
 
 		private Object getRemainingPathSegments(HttpServletRequest request) {
-			String[] pathTokens = tokenize(request, UrlPathHelper.PATH_ATTRIBUTE, true);
+			String[] pathTokens = tokenize(request, HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE, true);
 			String[] patternTokens = tokenize(request, HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE, false);
 			int numberOfRemainingPathSegments = pathTokens.length - patternTokens.length + 1;
 			Assert.state(numberOfRemainingPathSegments >= 0, "Unable to extract remaining path segments");
@@ -352,7 +398,9 @@ public abstract class AbstractWebMvcEndpointHandlerMapping extends RequestMappin
 				return result;
 			}
 			WebEndpointResponse<?> response = (WebEndpointResponse<?>) result;
-			return new ResponseEntity<Object>(response.getBody(), HttpStatus.valueOf(response.getStatus()));
+			MediaType contentType = (response.getContentType() != null) ? new MediaType(response.getContentType())
+					: null;
+			return ResponseEntity.status(response.getStatus()).contentType(contentType).body(response.getBody());
 		}
 
 	}
@@ -401,11 +449,14 @@ public abstract class AbstractWebMvcEndpointHandlerMapping extends RequestMappin
 
 	}
 
-	@ResponseStatus(code = HttpStatus.BAD_REQUEST)
-	private static class BadOperationRequestException extends RuntimeException {
+	/**
+	 * Nested exception used to wrap an {@link InvalidEndpointRequestException} and
+	 * provide a {@link HttpStatus#BAD_REQUEST} status.
+	 */
+	private static class InvalidEndpointBadRequestException extends ResponseStatusException {
 
-		BadOperationRequestException(String message) {
-			super(message);
+		InvalidEndpointBadRequestException(InvalidEndpointRequestException cause) {
+			super(HttpStatus.BAD_REQUEST, cause.getReason(), cause);
 		}
 
 	}

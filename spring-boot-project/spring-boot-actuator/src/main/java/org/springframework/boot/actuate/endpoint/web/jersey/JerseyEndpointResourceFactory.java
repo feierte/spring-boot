@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,8 +42,9 @@ import reactor.core.publisher.Mono;
 
 import org.springframework.boot.actuate.endpoint.InvalidEndpointRequestException;
 import org.springframework.boot.actuate.endpoint.InvocationContext;
+import org.springframework.boot.actuate.endpoint.OperationArgumentResolver;
+import org.springframework.boot.actuate.endpoint.ProducibleOperationArgumentResolver;
 import org.springframework.boot.actuate.endpoint.SecurityContext;
-import org.springframework.boot.actuate.endpoint.http.ApiVersion;
 import org.springframework.boot.actuate.endpoint.web.EndpointLinksResolver;
 import org.springframework.boot.actuate.endpoint.web.EndpointMapping;
 import org.springframework.boot.actuate.endpoint.web.EndpointMediaTypes;
@@ -52,6 +53,7 @@ import org.springframework.boot.actuate.endpoint.web.Link;
 import org.springframework.boot.actuate.endpoint.web.WebEndpointResponse;
 import org.springframework.boot.actuate.endpoint.web.WebOperation;
 import org.springframework.boot.actuate.endpoint.web.WebOperationRequestPredicate;
+import org.springframework.boot.actuate.endpoint.web.WebServerNamespace;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
@@ -91,7 +93,7 @@ public class JerseyEndpointResourceFactory {
 		return resources;
 	}
 
-	private Resource createResource(EndpointMapping endpointMapping, WebOperation operation) {
+	protected Resource createResource(EndpointMapping endpointMapping, WebOperation operation) {
 		WebOperationRequestPredicate requestPredicate = operation.getRequestPredicate();
 		String path = requestPredicate.getPath();
 		String matchAllRemainingPathSegmentsVariable = requestPredicate.getMatchAllRemainingPathSegmentsVariable();
@@ -99,11 +101,19 @@ public class JerseyEndpointResourceFactory {
 			path = path.replace("{*" + matchAllRemainingPathSegmentsVariable + "}",
 					"{" + matchAllRemainingPathSegmentsVariable + ": .*}");
 		}
-		Builder resourceBuilder = Resource.builder().path(endpointMapping.createSubPath(path));
+		return getResource(endpointMapping, operation, requestPredicate, path, null, null);
+	}
+
+	protected Resource getResource(EndpointMapping endpointMapping, WebOperation operation,
+			WebOperationRequestPredicate requestPredicate, String path, WebServerNamespace serverNamespace,
+			JerseyRemainingPathSegmentProvider remainingPathSegmentProvider) {
+		Builder resourceBuilder = Resource.builder().path(endpointMapping.getPath())
+				.path(endpointMapping.createSubPath(path));
 		resourceBuilder.addMethod(requestPredicate.getHttpMethod().name())
 				.consumes(StringUtils.toStringArray(requestPredicate.getConsumes()))
 				.produces(StringUtils.toStringArray(requestPredicate.getProduces()))
-				.handledBy(new OperationInflector(operation, !requestPredicate.getConsumes().isEmpty()));
+				.handledBy(new OperationInflector(operation, !requestPredicate.getConsumes().isEmpty(), serverNamespace,
+						remainingPathSegmentProvider));
 		return resourceBuilder.build();
 	}
 
@@ -137,9 +147,16 @@ public class JerseyEndpointResourceFactory {
 
 		private final boolean readBody;
 
-		private OperationInflector(WebOperation operation, boolean readBody) {
+		private final WebServerNamespace serverNamespace;
+
+		private final JerseyRemainingPathSegmentProvider remainingPathSegmentProvider;
+
+		private OperationInflector(WebOperation operation, boolean readBody, WebServerNamespace serverNamespace,
+				JerseyRemainingPathSegmentProvider remainingPathSegments) {
 			this.operation = operation;
 			this.readBody = readBody;
+			this.serverNamespace = serverNamespace;
+			this.remainingPathSegmentProvider = remainingPathSegments;
 		}
 
 		@Override
@@ -151,9 +168,12 @@ public class JerseyEndpointResourceFactory {
 			arguments.putAll(extractPathParameters(data));
 			arguments.putAll(extractQueryParameters(data));
 			try {
-				ApiVersion apiVersion = ApiVersion.fromHttpHeaders(data.getHeaders());
 				JerseySecurityContext securityContext = new JerseySecurityContext(data.getSecurityContext());
-				InvocationContext invocationContext = new InvocationContext(apiVersion, securityContext, arguments);
+				OperationArgumentResolver serverNamespaceArgumentResolver = OperationArgumentResolver
+						.of(WebServerNamespace.class, () -> this.serverNamespace);
+				InvocationContext invocationContext = new InvocationContext(securityContext, arguments,
+						serverNamespaceArgumentResolver,
+						new ProducibleOperationArgumentResolver(() -> data.getHeaders().get("Accept")));
 				Object response = this.operation.invoke(invocationContext);
 				return convertToJaxRsResponse(response, data.getRequest().getMethod());
 			}
@@ -173,10 +193,19 @@ public class JerseyEndpointResourceFactory {
 			String matchAllRemainingPathSegmentsVariable = this.operation.getRequestPredicate()
 					.getMatchAllRemainingPathSegmentsVariable();
 			if (matchAllRemainingPathSegmentsVariable != null) {
-				String remainingPathSegments = (String) pathParameters.get(matchAllRemainingPathSegmentsVariable);
+				String remainingPathSegments = getRemainingPathSegments(requestContext, pathParameters,
+						matchAllRemainingPathSegmentsVariable);
 				pathParameters.put(matchAllRemainingPathSegmentsVariable, tokenizePathSegments(remainingPathSegments));
 			}
 			return pathParameters;
+		}
+
+		private String getRemainingPathSegments(ContainerRequestContext requestContext,
+				Map<String, Object> pathParameters, String matchAllRemainingPathSegmentsVariable) {
+			if (this.remainingPathSegmentProvider != null) {
+				return this.remainingPathSegmentProvider.get(requestContext, matchAllRemainingPathSegmentsVariable);
+			}
+			return (String) pathParameters.get(matchAllRemainingPathSegmentsVariable);
 		}
 
 		private String[] tokenizePathSegments(String path) {
@@ -215,6 +244,7 @@ public class JerseyEndpointResourceFactory {
 				}
 				WebEndpointResponse<?> webEndpointResponse = (WebEndpointResponse<?>) response;
 				return Response.status(webEndpointResponse.getStatus())
+						.header("Content-Type", webEndpointResponse.getContentType())
 						.entity(convertIfNecessary(webEndpointResponse.getBody())).build();
 			}
 			catch (IOException ex) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ class OriginTrackedPropertiesLoaderTests {
 	}
 
 	@Test
-	void getMalformedUnicodeProperty() throws Exception {
+	void getMalformedUnicodeProperty() {
 		// gh-12716
 		ClassPathResource resource = new ClassPathResource("test-properties-malformed-unicode.properties", getClass());
 		assertThatIllegalStateException().isThrownBy(() -> new OriginTrackedPropertiesLoader(resource).load())
@@ -291,6 +291,12 @@ class OriginTrackedPropertiesLoaderTests {
 		this.resource = new ClassPathResource("existing-non-multi-document.properties", getClass());
 		this.documents = new OriginTrackedPropertiesLoader(this.resource).load();
 		assertThat(this.documents.size()).isEqualTo(1);
+	}
+
+	@Test
+	void getPropertyAfterPoundCharacter() {
+		OriginTrackedValue value = getFromFirst("test-line-after-empty-pound");
+		assertThat(getValue(value)).isEqualTo("abc");
 	}
 
 	private OriginTrackedValue getFromFirst(String key) {

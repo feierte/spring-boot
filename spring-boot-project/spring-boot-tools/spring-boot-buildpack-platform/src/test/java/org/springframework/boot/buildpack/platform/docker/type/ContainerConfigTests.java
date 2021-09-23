@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
  *
  * @author Phillip Webb
  * @author Scott Frederick
+ * @author Jeroen Meijer
  */
 class ContainerConfigTests extends AbstractJsonTests {
 
@@ -56,9 +57,10 @@ class ContainerConfigTests extends AbstractJsonTests {
 			update.withCommand("ls", "-l");
 			update.withArgs("-h");
 			update.withLabel("spring", "boot");
-			update.withBind("bind-source", "bind-dest");
+			update.withBinding(Binding.from("bind-source", "bind-dest"));
 			update.withEnv("name1", "value1");
 			update.withEnv("name2", "value2");
+			update.withNetworkMode("test");
 		});
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 		containerConfig.writeTo(outputStream);

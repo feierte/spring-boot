@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.springframework.boot.build.bom;
 
 import java.io.File;
@@ -37,14 +38,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Andy Wilkinson
  */
-public class BomPluginIntegrationTests {
+class BomPluginIntegrationTests {
 
 	private File projectDir;
 
 	private File buildFile;
 
 	@BeforeEach
-	public void setup(@TempDir File projectDir) throws IOException {
+	void setup(@TempDir File projectDir) throws IOException {
 		this.projectDir = projectDir;
 		this.buildFile = new File(this.projectDir, "build.gradle");
 	}
@@ -195,6 +196,34 @@ public class BomPluginIntegrationTests {
 			assertThat(dependency).textAtPath("type").isNullOrEmpty();
 		});
 	}
+
+	// @Test
+	// void versionAlignmentIsVerified() throws IOException {
+	// try (PrintWriter out = new PrintWriter(new FileWriter(this.buildFile))) {
+	// out.println("plugins {");
+	// out.println(" id 'org.springframework.boot.bom'");
+	// out.println("}");
+	// out.println("bom {");
+	// out.println(" library('OAuth2 OIDC SDK', '8.36.1') {");
+	// out.println(" alignedWith('Spring Security') {");
+	// out.println(
+	// "
+	// source('https://github.com/spring-projects/spring-security/blob/${libraryVersion}/config/gradle/dependency-locks/optional.lockfile')");
+	// out.println(" pattern('com.nimbusds:oauth2-oidc-sdk:(.+)')");
+	// out.println(" }");
+	// out.println(" group('com.nimbusds') {");
+	// out.println(" modules = [");
+	// out.println(" 'oauth2-oidc-sdk'");
+	// out.println(" ]");
+	// out.println(" }");
+	// out.println(" }");
+	// out.println(" library('Spring Security', '5.4.7') {");
+	// out.println(" }");
+	// out.println("}");
+	// }
+	// System.out.println(runGradle(DeployedPlugin.GENERATE_POM_TASK_NAME,
+	// "-s").getOutput());
+	// }
 
 	private BuildResult runGradle(String... args) {
 		return GradleRunner.create().withDebug(true).withProjectDir(this.projectDir).withArguments(args)

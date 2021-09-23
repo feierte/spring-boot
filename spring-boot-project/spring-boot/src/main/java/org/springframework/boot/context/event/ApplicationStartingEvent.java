@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,18 +40,6 @@ public class ApplicationStartingEvent extends SpringApplicationEvent {
 
 	/**
 	 * Create a new {@link ApplicationStartingEvent} instance.
-	 * @param application the current application
-	 * @param args the arguments the application is running with
-	 * @deprecated since 2.4.0 in favor of
-	 * {@link #ApplicationStartingEvent(ConfigurableBootstrapContext, SpringApplication, String[])}
-	 */
-	@Deprecated
-	public ApplicationStartingEvent(SpringApplication application, String[] args) {
-		this(null, application, args);
-	}
-
-	/**
-	 * Create a new {@link ApplicationStartingEvent} instance.
 	 * @param bootstrapContext the bootstrap context
 	 * @param application the current application
 	 * @param args the arguments the application is running with
@@ -63,7 +51,7 @@ public class ApplicationStartingEvent extends SpringApplicationEvent {
 	}
 
 	/**
-	 * Return the bootstap context.
+	 * Return the bootstrap context.
 	 * @return the bootstrap context
 	 * @since 2.4.0
 	 */

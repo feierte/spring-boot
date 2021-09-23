@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,20 +37,6 @@ public class ApplicationEnvironmentPreparedEvent extends SpringApplicationEvent 
 
 	/**
 	 * Create a new {@link ApplicationEnvironmentPreparedEvent} instance.
-	 * @param application the current application
-	 * @param args the arguments the application is running with
-	 * @param environment the environment that was just created
-	 * @deprecated since 2.4.0 in favor of
-	 * {@link #ApplicationEnvironmentPreparedEvent(ConfigurableBootstrapContext, SpringApplication, String[], ConfigurableEnvironment)}
-	 */
-	@Deprecated
-	public ApplicationEnvironmentPreparedEvent(SpringApplication application, String[] args,
-			ConfigurableEnvironment environment) {
-		this(null, application, args, environment);
-	}
-
-	/**
-	 * Create a new {@link ApplicationEnvironmentPreparedEvent} instance.
 	 * @param bootstrapContext the bootstrap context
 	 * @param application the current application
 	 * @param args the arguments the application is running with
@@ -64,7 +50,7 @@ public class ApplicationEnvironmentPreparedEvent extends SpringApplicationEvent 
 	}
 
 	/**
-	 * Return the bootstap context.
+	 * Return the bootstrap context.
 	 * @return the bootstrap context
 	 * @since 2.4.0
 	 */

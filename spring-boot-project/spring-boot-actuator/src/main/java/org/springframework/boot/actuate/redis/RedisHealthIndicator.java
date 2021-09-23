@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,16 +51,16 @@ public class RedisHealthIndicator extends AbstractHealthIndicator {
 			doHealthCheck(builder, connection);
 		}
 		finally {
-			RedisConnectionUtils.releaseConnection(connection, this.redisConnectionFactory, false);
+			RedisConnectionUtils.releaseConnection(connection, this.redisConnectionFactory);
 		}
 	}
 
 	private void doHealthCheck(Health.Builder builder, RedisConnection connection) {
 		if (connection instanceof RedisClusterConnection) {
-			RedisHealth.up(builder, ((RedisClusterConnection) connection).clusterGetClusterInfo());
+			RedisHealth.fromClusterInfo(builder, ((RedisClusterConnection) connection).clusterGetClusterInfo());
 		}
 		else {
-			RedisHealth.up(builder, connection.info());
+			RedisHealth.up(builder, connection.info("server"));
 		}
 	}
 

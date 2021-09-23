@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ import static org.mockito.Mockito.verify;
  */
 public abstract class AbstractWebEndpointIntegrationTests<T extends ConfigurableApplicationContext & AnnotationConfigRegistry> {
 
-	private static final Duration TIMEOUT = Duration.ofMinutes(6);
+	private static final Duration TIMEOUT = Duration.ofMinutes(5);
 
 	private static final String ACTUATOR_MEDIA_TYPE_PATTERN = "application/vnd.test\\+json(;charset=UTF-8)?";
 
@@ -137,7 +137,7 @@ public abstract class AbstractWebEndpointIntegrationTests<T extends Configurable
 	@Test
 	void matchAllRemainingPathsSelectorShouldDecodePath() {
 		load(MatchAllRemainingEndpointConfiguration.class,
-				(client) -> client.get().uri("/matchallremaining/one/two%20three/").exchange().expectStatus().isOk()
+				(client) -> client.get().uri("/matchallremaining/one/two three/").exchange().expectStatus().isOk()
 						.expectBody().jsonPath("selection").isEqualTo("one|two three"));
 	}
 
@@ -378,6 +378,12 @@ public abstract class AbstractWebEndpointIntegrationTests<T extends Configurable
 			context.register(UserInRoleEndpointConfiguration.class);
 		}, (client) -> client.get().uri("/userinrole?role=ACTUATOR").accept(MediaType.APPLICATION_JSON).exchange()
 				.expectStatus().isOk().expectBody(String.class).isEqualTo("ACTUATOR: true"));
+	}
+
+	@Test
+	void endpointCanProduceAResponseWithACustomStatus() {
+		load((context) -> context.register(CustomResponseStatusEndpointConfiguration.class),
+				(client) -> client.get().uri("/customstatus").exchange().expectStatus().isEqualTo(234));
 	}
 
 	protected abstract int getPort(T context);
@@ -624,6 +630,17 @@ public abstract class AbstractWebEndpointIntegrationTests<T extends Configurable
 
 	}
 
+	@Configuration(proxyBeanMethods = false)
+	@Import(BaseConfiguration.class)
+	static class CustomResponseStatusEndpointConfiguration {
+
+		@Bean
+		CustomResponseStatusEndpoint customResponseStatusEndpoint() {
+			return new CustomResponseStatusEndpoint();
+		}
+
+	}
+
 	@Endpoint(id = "test")
 	static class TestEndpoint {
 
@@ -846,6 +863,16 @@ public abstract class AbstractWebEndpointIntegrationTests<T extends Configurable
 		@ReadOperation
 		String read(SecurityContext securityContext, String role) {
 			return role + ": " + securityContext.isUserInRole(role);
+		}
+
+	}
+
+	@Endpoint(id = "customstatus")
+	static class CustomResponseStatusEndpoint {
+
+		@ReadOperation
+		WebEndpointResponse<String> read() {
+			return new WebEndpointResponse<>("Custom status", 234);
 		}
 
 	}

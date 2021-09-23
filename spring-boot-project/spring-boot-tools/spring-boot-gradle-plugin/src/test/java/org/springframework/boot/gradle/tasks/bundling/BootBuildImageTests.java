@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,21 @@
 package org.springframework.boot.gradle.tasks.bundling;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.gradle.api.GradleException;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
-import org.gradle.testfixtures.ProjectBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import org.springframework.boot.buildpack.platform.build.BuildRequest;
+import org.springframework.boot.buildpack.platform.build.BuildpackReference;
 import org.springframework.boot.buildpack.platform.build.PullPolicy;
+import org.springframework.boot.buildpack.platform.docker.type.Binding;
+import org.springframework.boot.gradle.junit.GradleProjectBuilder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -39,6 +42,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
  * @author Andy Wilkinson
  * @author Scott Frederick
  * @author Andrey Shlykov
+ * @author Jeroen Meijer
  */
 class BootBuildImageTests {
 
@@ -52,13 +56,14 @@ class BootBuildImageTests {
 	BootBuildImageTests() {
 		File projectDir = new File(this.temp, "project");
 		projectDir.mkdirs();
-		this.project = ProjectBuilder.builder().withProjectDir(projectDir).withName("build-image-test").build();
+		this.project = GradleProjectBuilder.builder().withProjectDir(projectDir).withName("build-image-test").build();
 		this.project.setDescription("Test project for BootBuildImage");
 		this.buildImage = this.project.getTasks().create("buildImage", BootBuildImage.class);
 	}
 
 	@Test
 	void whenProjectVersionIsUnspecifiedThenItIsIgnoredWhenDerivingImageName() {
+		assertThat(this.buildImage.getImageName()).isEqualTo("docker.io/library/build-image-test");
 		BuildRequest request = this.buildImage.createRequest();
 		assertThat(request.getName().getDomain()).isEqualTo("docker.io");
 		assertThat(request.getName().getName()).isEqualTo("library/build-image-test");
@@ -69,6 +74,7 @@ class BootBuildImageTests {
 	@Test
 	void whenProjectVersionIsSpecifiedThenItIsUsedInTagOfImageName() {
 		this.project.setVersion("1.2.3");
+		assertThat(this.buildImage.getImageName()).isEqualTo("docker.io/library/build-image-test:1.2.3");
 		BuildRequest request = this.buildImage.createRequest();
 		assertThat(request.getName().getDomain()).isEqualTo("docker.io");
 		assertThat(request.getName().getName()).isEqualTo("library/build-image-test");
@@ -80,6 +86,7 @@ class BootBuildImageTests {
 	void whenImageNameIsSpecifiedThenItIsUsedInRequest() {
 		this.project.setVersion("1.2.3");
 		this.buildImage.setImageName("example.com/test/build-image:1.0");
+		assertThat(this.buildImage.getImageName()).isEqualTo("example.com/test/build-image:1.0");
 		BuildRequest request = this.buildImage.createRequest();
 		assertThat(request.getName().getDomain()).isEqualTo("example.com");
 		assertThat(request.getName().getName()).isEqualTo("test/build-image");
@@ -219,6 +226,66 @@ class BootBuildImageTests {
 	void whenPullPolicyIsConfiguredThenRequestHasPullPolicy() {
 		this.buildImage.setPullPolicy(PullPolicy.NEVER);
 		assertThat(this.buildImage.createRequest().getPullPolicy()).isEqualTo(PullPolicy.NEVER);
+	}
+
+	@Test
+	void whenNoBuildpacksAreConfiguredThenRequestUsesDefaultBuildpacks() {
+		assertThat(this.buildImage.createRequest().getBuildpacks()).isEmpty();
+	}
+
+	@Test
+	void whenBuildpacksAreConfiguredThenRequestHasBuildpacks() {
+		this.buildImage.setBuildpacks(Arrays.asList("example/buildpack1", "example/buildpack2"));
+		assertThat(this.buildImage.createRequest().getBuildpacks()).containsExactly(
+				BuildpackReference.of("example/buildpack1"), BuildpackReference.of("example/buildpack2"));
+	}
+
+	@Test
+	void whenEntriesAreAddedToBuildpacksThenRequestHasBuildpacks() {
+		this.buildImage.buildpacks(Arrays.asList("example/buildpack1", "example/buildpack2"));
+		assertThat(this.buildImage.createRequest().getBuildpacks()).containsExactly(
+				BuildpackReference.of("example/buildpack1"), BuildpackReference.of("example/buildpack2"));
+	}
+
+	@Test
+	void whenIndividualEntriesAreAddedToBuildpacksThenRequestHasBuildpacks() {
+		this.buildImage.buildpack("example/buildpack1");
+		this.buildImage.buildpack("example/buildpack2");
+		assertThat(this.buildImage.createRequest().getBuildpacks()).containsExactly(
+				BuildpackReference.of("example/buildpack1"), BuildpackReference.of("example/buildpack2"));
+	}
+
+	@Test
+	void whenNoBindingsAreConfiguredThenRequestHasNoBindings() {
+		assertThat(this.buildImage.createRequest().getBindings()).isEmpty();
+	}
+
+	@Test
+	void whenBindingsAreConfiguredThenRequestHasBindings() {
+		this.buildImage.setBindings(Arrays.asList("host-src:container-dest:ro", "volume-name:container-dest:rw"));
+		assertThat(this.buildImage.createRequest().getBindings())
+				.containsExactly(Binding.of("host-src:container-dest:ro"), Binding.of("volume-name:container-dest:rw"));
+	}
+
+	@Test
+	void whenEntriesAreAddedToBindingsThenRequestHasBindings() {
+		this.buildImage.bindings(Arrays.asList("host-src:container-dest:ro", "volume-name:container-dest:rw"));
+		assertThat(this.buildImage.createRequest().getBindings())
+				.containsExactly(Binding.of("host-src:container-dest:ro"), Binding.of("volume-name:container-dest:rw"));
+	}
+
+	@Test
+	void whenIndividualEntriesAreAddedToBindingsThenRequestHasBindings() {
+		this.buildImage.binding("host-src:container-dest:ro");
+		this.buildImage.binding("volume-name:container-dest:rw");
+		assertThat(this.buildImage.createRequest().getBindings())
+				.containsExactly(Binding.of("host-src:container-dest:ro"), Binding.of("volume-name:container-dest:rw"));
+	}
+
+	@Test
+	void whenNetworkIsConfiguredThenRequestHasNetwork() {
+		this.buildImage.setNetwork("test");
+		assertThat(this.buildImage.createRequest().getNetwork()).isEqualTo("test");
 	}
 
 }

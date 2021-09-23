@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.boot.availability.AvailabilityChangeEvent;
 import org.springframework.boot.availability.ReadinessState;
 import org.springframework.boot.web.context.ConfigurableWebServerApplicationContext;
+import org.springframework.boot.web.context.WebServerGracefulShutdownLifecycle;
 import org.springframework.boot.web.server.WebServer;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.web.servlet.ServletContextInitializer;
@@ -335,9 +336,9 @@ public class ServletWebServerApplicationContext extends GenericWebApplicationCon
 	}
 
 	/**
-	 * Utility class to store and restore any user defined scopes. This allow scopes to be
-	 * registered in an ApplicationContextInitializer in the same way as they would in a
-	 * classic non-embedded web application context.
+	 * Utility class to store and restore any user defined scopes. This allows scopes to
+	 * be registered in an ApplicationContextInitializer in the same way as they would in
+	 * a classic non-embedded web application context.
 	 */
 	public static class ExistingWebApplicationScopes {
 

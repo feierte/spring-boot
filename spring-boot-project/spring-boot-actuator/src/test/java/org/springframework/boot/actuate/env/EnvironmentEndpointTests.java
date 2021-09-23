@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.springframework.boot.actuate.env;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -164,6 +165,28 @@ class EnvironmentEndpointTests {
 	}
 
 	@Test
+	void keysMatchingCustomSanitizingFunctionHaveTheirValuesSanitized() {
+		ConfigurableEnvironment environment = new StandardEnvironment();
+		TestPropertyValues.of("other.service=abcde").applyTo(environment);
+		TestPropertyValues.of("system.service=123456").applyToSystemProperties(() -> {
+			EnvironmentDescriptor descriptor = new EnvironmentEndpoint(environment,
+					Collections.singletonList((data) -> {
+						String name = data.getPropertySource().getName();
+						if (name.equals(StandardEnvironment.SYSTEM_PROPERTIES_PROPERTY_SOURCE_NAME)) {
+							return data.withValue("******");
+						}
+						return data;
+					})).environment(null);
+			assertThat(propertySources(descriptor).get("test").getProperties().get("other.service").getValue())
+					.isEqualTo("abcde");
+			Map<String, PropertyValueDescriptor> systemProperties = propertySources(descriptor).get("systemProperties")
+					.getProperties();
+			assertThat(systemProperties.get("system.service").getValue()).isEqualTo("******");
+			return null;
+		});
+	}
+
+	@Test
 	void propertyWithPlaceholderResolved() {
 		ConfigurableEnvironment environment = emptyEnvironment();
 		TestPropertyValues.of("my.foo: ${bar.blah}", "bar.blah: hello").applyTo(environment);
@@ -199,7 +222,18 @@ class EnvironmentEndpointTests {
 	}
 
 	@Test
-	void propertyWithTypeOtherThanStringShouldNotFail() {
+	void propertyWithSensitivePlaceholderWithCustomFunctionResolved() {
+		ConfigurableEnvironment environment = emptyEnvironment();
+		TestPropertyValues.of("my.foo: http://${bar.password}://hello", "bar.password: hello").applyTo(environment);
+		EnvironmentDescriptor descriptor = new EnvironmentEndpoint(environment,
+				Collections.singletonList((data) -> data.withValue(data.getPropertySource().getName() + "******")))
+						.environment(null);
+		assertThat(propertySources(descriptor).get("test").getProperties().get("my.foo").getValue())
+				.isEqualTo("test******");
+	}
+
+	@Test
+	void propertyWithComplexTypeShouldNotFail() {
 		ConfigurableEnvironment environment = emptyEnvironment();
 		environment.getPropertySources()
 				.addFirst(singleKeyPropertySource("test", "foo", Collections.singletonMap("bar", "baz")));
@@ -209,7 +243,24 @@ class EnvironmentEndpointTests {
 	}
 
 	@Test
-	void propertyWithCharSequenceTypeIsConvertedToString() throws Exception {
+	void propertyWithPrimitiveOrWrapperTypeIsHandledCorrectly() {
+		ConfigurableEnvironment environment = emptyEnvironment();
+		Map<String, Object> map = new LinkedHashMap<>();
+		map.put("char", 'a');
+		map.put("integer", 100);
+		map.put("boolean", true);
+		map.put("biginteger", BigInteger.valueOf(200));
+		environment.getPropertySources().addFirst(new MapPropertySource("test", map));
+		EnvironmentDescriptor descriptor = new EnvironmentEndpoint(environment).environment(null);
+		Map<String, PropertyValueDescriptor> properties = propertySources(descriptor).get("test").getProperties();
+		assertThat(properties.get("char").getValue()).isEqualTo('a');
+		assertThat(properties.get("integer").getValue()).isEqualTo(100);
+		assertThat(properties.get("boolean").getValue()).isEqualTo(true);
+		assertThat(properties.get("biginteger").getValue()).isEqualTo(BigInteger.valueOf(200));
+	}
+
+	@Test
+	void propertyWithCharSequenceTypeIsConvertedToString() {
 		ConfigurableEnvironment environment = emptyEnvironment();
 		environment.getPropertySources().addFirst(singleKeyPropertySource("test", "foo", new CharSequenceProperty()));
 		EnvironmentDescriptor descriptor = new EnvironmentEndpoint(environment).environment(null);

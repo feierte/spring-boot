@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -35,6 +36,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
@@ -46,6 +48,7 @@ import java.util.zip.ZipFile;
 
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,7 +56,6 @@ import org.junit.jupiter.api.io.TempDir;
 
 import org.springframework.boot.loader.TestJarCreator;
 import org.springframework.boot.loader.data.RandomAccessDataFile;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.util.StopWatch;
 import org.springframework.util.StreamUtils;
@@ -563,7 +565,7 @@ class JarFileTests {
 	}
 
 	@Test
-	void zip64JarCanBeRead() throws Exception {
+	void zip64JarThatExceedsZipEntryLimitCanBeRead() throws Exception {
 		File zip64Jar = new File(this.tempDir, "zip64.jar");
 		FileCopyUtils.copy(zip64Jar(), zip64Jar);
 		try (JarFile zip64JarFile = new JarFile(zip64Jar)) {
@@ -574,6 +576,39 @@ class JarFileTests {
 				InputStream entryInput = zip64JarFile.getInputStream(entry);
 				assertThat(entryInput).hasContent("Entry " + (i + 1));
 			}
+		}
+	}
+
+	@Test
+	void zip64JarThatExceedsZipSizeLimitCanBeRead() throws Exception {
+		Assumptions.assumeTrue(this.tempDir.getFreeSpace() > 6 * 1024 * 1024 * 1024, "Insufficient disk space");
+		File zip64Jar = new File(this.tempDir, "zip64.jar");
+		File entry = new File(this.tempDir, "entry.dat");
+		CRC32 crc32 = new CRC32();
+		try (FileOutputStream entryOut = new FileOutputStream(entry)) {
+			byte[] data = new byte[1024 * 1024];
+			new Random().nextBytes(data);
+			for (int i = 0; i < 1024; i++) {
+				entryOut.write(data);
+				crc32.update(data);
+			}
+		}
+		try (JarOutputStream jarOutput = new JarOutputStream(new FileOutputStream(zip64Jar))) {
+			for (int i = 0; i < 6; i++) {
+				JarEntry storedEntry = new JarEntry("huge-" + i);
+				storedEntry.setSize(entry.length());
+				storedEntry.setCompressedSize(entry.length());
+				storedEntry.setCrc(crc32.getValue());
+				storedEntry.setMethod(ZipEntry.STORED);
+				jarOutput.putNextEntry(storedEntry);
+				try (FileInputStream entryIn = new FileInputStream(entry)) {
+					StreamUtils.copy(entryIn, jarOutput);
+				}
+				jarOutput.closeEntry();
+			}
+		}
+		try (JarFile zip64JarFile = new JarFile(zip64Jar)) {
+			assertThat(Collections.list(zip64JarFile.entries())).hasSize(6);
 		}
 	}
 
@@ -621,17 +656,7 @@ class JarFileTests {
 
 	@Test
 	void jarFileEntryWithEpochTimeOfZeroShouldNotFail() throws Exception {
-		File file = new File(this.tempDir, "timed.jar");
-		FileOutputStream fileOutputStream = new FileOutputStream(file);
-		try (JarOutputStream jarOutputStream = new JarOutputStream(fileOutputStream)) {
-			jarOutputStream.setComment("outer");
-			JarEntry entry = new JarEntry("1.dat");
-			entry.setLastModifiedTime(FileTime.from(Instant.EPOCH));
-			ReflectionTestUtils.setField(entry, "xdostime", 0);
-			jarOutputStream.putNextEntry(entry);
-			jarOutputStream.write(new byte[] { (byte) 1 });
-			jarOutputStream.closeEntry();
-		}
+		File file = createJarFileWithEpochTimeOfZero();
 		try (JarFile jar = new JarFile(file)) {
 			Enumeration<java.util.jar.JarEntry> entries = jar.entries();
 			JarEntry entry = entries.nextElement();
@@ -640,10 +665,42 @@ class JarFileTests {
 		}
 	}
 
+	private File createJarFileWithEpochTimeOfZero() throws Exception {
+		File jarFile = new File(this.tempDir, "temp.jar");
+		FileOutputStream fileOutputStream = new FileOutputStream(jarFile);
+		String comment = "outer";
+		try (JarOutputStream jarOutputStream = new JarOutputStream(fileOutputStream)) {
+			jarOutputStream.setComment(comment);
+			JarEntry entry = new JarEntry("1.dat");
+			entry.setLastModifiedTime(FileTime.from(Instant.EPOCH));
+			jarOutputStream.putNextEntry(entry);
+			jarOutputStream.write(new byte[] { (byte) 1 });
+			jarOutputStream.closeEntry();
+		}
+
+		byte[] data = Files.readAllBytes(jarFile.toPath());
+		int headerPosition = data.length - ZipFile.ENDHDR - comment.getBytes().length;
+		int centralHeaderPosition = (int) Bytes.littleEndianValue(data, headerPosition + ZipFile.ENDOFF, 1);
+		int localHeaderPosition = (int) Bytes.littleEndianValue(data, centralHeaderPosition + ZipFile.CENOFF, 1);
+		writeTimeBlock(data, centralHeaderPosition + ZipFile.CENTIM, 0);
+		writeTimeBlock(data, localHeaderPosition + ZipFile.LOCTIM, 0);
+
+		File jar = new File(this.tempDir, "zerotimed.jar");
+		Files.write(jar.toPath(), data);
+		return jar;
+	}
+
+	private static void writeTimeBlock(byte[] data, int pos, int value) {
+		data[pos] = (byte) (value & 0xff);
+		data[pos + 1] = (byte) ((value >> 8) & 0xff);
+		data[pos + 2] = (byte) ((value >> 16) & 0xff);
+		data[pos + 3] = (byte) ((value >> 24) & 0xff);
+	}
+
 	@Test
 	void iterator() {
 		Iterator<JarEntry> iterator = this.jarFile.iterator();
-		List<String> names = new ArrayList<String>();
+		List<String> names = new ArrayList<>();
 		while (iterator.hasNext()) {
 			names.add(iterator.next().getName());
 		}

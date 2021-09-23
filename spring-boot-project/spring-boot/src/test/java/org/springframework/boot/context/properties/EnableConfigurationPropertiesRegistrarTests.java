@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.springframework.boot.context.properties;
 
-import java.io.IOException;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-import org.springframework.beans.factory.support.GenericBeanDefinition;
+import org.springframework.beans.factory.support.RootBeanDefinition;
+import org.springframework.boot.context.properties.ConfigurationPropertiesBean.BindMethod;
 import org.springframework.core.type.AnnotationMetadata;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,27 +54,27 @@ class EnableConfigurationPropertiesRegistrarTests {
 	}
 
 	@Test
-	void typeWithDefaultConstructorShouldRegisterGenericBeanDefinition() throws Exception {
+	void typeWithDefaultConstructorShouldRegisterRootBeanDefinition() {
 		register(TestConfiguration.class);
-		BeanDefinition beanDefinition = this.beanFactory
+		BeanDefinition definition = this.beanFactory
 				.getBeanDefinition("foo-" + getClass().getName() + "$FooProperties");
-		assertThat(beanDefinition).isExactlyInstanceOf(GenericBeanDefinition.class);
+		assertThat(definition).satisfies(configurationPropertiesBeanDefinition(BindMethod.JAVA_BEAN));
 	}
 
 	@Test
-	void typeWithConstructorBindingShouldRegisterConfigurationPropertiesBeanDefinition() throws Exception {
+	void typeWithConstructorBindingShouldRegisterConfigurationPropertiesBeanDefinition() {
 		register(TestConfiguration.class);
-		BeanDefinition beanDefinition = this.beanFactory
+		BeanDefinition definition = this.beanFactory
 				.getBeanDefinition("bar-" + getClass().getName() + "$BarProperties");
-		assertThat(beanDefinition).isExactlyInstanceOf(ConfigurationPropertiesValueObjectBeanDefinition.class);
+		assertThat(definition).satisfies(configurationPropertiesBeanDefinition(BindMethod.VALUE_OBJECT));
 	}
 
 	@Test
-	void typeWithMultipleConstructorsShouldRegisterGenericBeanDefinition() throws Exception {
+	void typeWithMultipleConstructorsShouldRegisterGenericBeanDefinition() {
 		register(TestConfiguration.class);
-		BeanDefinition beanDefinition = this.beanFactory
+		BeanDefinition definition = this.beanFactory
 				.getBeanDefinition("bing-" + getClass().getName() + "$BingProperties");
-		assertThat(beanDefinition).isExactlyInstanceOf(GenericBeanDefinition.class);
+		assertThat(definition).satisfies(configurationPropertiesBeanDefinition(BindMethod.JAVA_BEAN));
 	}
 
 	@Test
@@ -83,19 +85,27 @@ class EnableConfigurationPropertiesRegistrarTests {
 	}
 
 	@Test
-	void registrationWithDuplicatedTypeShouldRegisterSingleBeanDefinition() throws IOException {
+	void registrationWithDuplicatedTypeShouldRegisterSingleBeanDefinition() {
 		register(DuplicateConfiguration.class);
 		String name = "foo-" + getClass().getName() + "$FooProperties";
 		verify(this.beanFactory, times(1)).registerBeanDefinition(eq(name), any());
 	}
 
 	@Test
-	void registrationWithNoTypeShouldNotRegisterAnything() throws IOException {
+	void registrationWithNoTypeShouldNotRegisterAnything() {
 		register(EmptyConfiguration.class);
 		String[] names = this.beanFactory.getBeanNamesForType(Object.class);
 		for (String name : names) {
 			assertThat(name).doesNotContain("-");
 		}
+	}
+
+	private Consumer<BeanDefinition> configurationPropertiesBeanDefinition(BindMethod bindMethod) {
+		return (definition) -> {
+			assertThat(definition).isExactlyInstanceOf(RootBeanDefinition.class);
+			assertThat(definition.hasAttribute(BindMethod.class.getName())).isTrue();
+			assertThat(definition.getAttribute(BindMethod.class.getName())).isEqualTo(bindMethod);
+		};
 	}
 
 	private void register(Class<?> configuration) {

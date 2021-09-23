@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Tests for {@link FlywayProperties}.
  *
  * @author Stephane Nicoll
+ * @author Chris Bono
  */
 class FlywayPropertiesTests {
 
@@ -47,10 +48,14 @@ class FlywayPropertiesTests {
 	void defaultValuesAreConsistent() {
 		FlywayProperties properties = new FlywayProperties();
 		Configuration configuration = new FluentConfiguration();
+		assertThat(configuration.getFailOnMissingLocations()).isEqualTo(properties.isFailOnMissingLocations());
 		assertThat(properties.getLocations().stream().map(Location::new).toArray(Location[]::new))
 				.isEqualTo(configuration.getLocations());
 		assertThat(properties.getEncoding()).isEqualTo(configuration.getEncoding());
 		assertThat(properties.getConnectRetries()).isEqualTo(configuration.getConnectRetries());
+		// Can't assert connect retries interval as it is new in Flyway 7.15
+		// Asserting hard-coded value in the metadata instead
+		assertThat(configuration.getConnectRetriesInterval()).isEqualTo(120);
 		// Can't assert lock retry count default as it is new in Flyway 7.1
 		// Asserting hard-coded value in the metadata instead
 		assertThat(configuration.getLockRetryCount()).isEqualTo(50);
@@ -90,6 +95,9 @@ class FlywayPropertiesTests {
 		assertThat(configuration.isSkipDefaultResolvers()).isEqualTo(properties.isSkipDefaultResolvers());
 		assertThat(configuration.isValidateMigrationNaming()).isEqualTo(properties.isValidateMigrationNaming());
 		assertThat(configuration.isValidateOnMigrate()).isEqualTo(properties.isValidateOnMigrate());
+		assertThat(properties.getDetectEncoding()).isNull();
+		assertThat(configuration.getScriptPlaceholderPrefix()).isEqualTo("FP__");
+		assertThat(configuration.getScriptPlaceholderSuffix()).isEqualTo("__");
 	}
 
 	@Test
@@ -99,13 +107,13 @@ class FlywayPropertiesTests {
 		Map<String, PropertyDescriptor> configuration = indexProperties(
 				PropertyAccessorFactory.forBeanPropertyAccess(new ClassicConfiguration()));
 		// Properties specific settings
-		ignoreProperties(properties, "url", "user", "password", "enabled", "checkLocation", "createDataSource");
-
+		ignoreProperties(properties, "url", "driverClassName", "user", "password", "enabled", "checkLocation",
+				"createDataSource");
 		// High level object we can't set with properties
 		ignoreProperties(configuration, "callbacks", "classLoader", "dataSource", "javaMigrations",
 				"javaMigrationClassProvider", "resourceProvider", "resolvers");
 		// Properties we don't want to expose
-		ignoreProperties(configuration, "resolversAsClassNames", "callbacksAsClassNames");
+		ignoreProperties(configuration, "resolversAsClassNames", "callbacksAsClassNames", "apiExtensions", "loggers");
 		// Handled by the conversion service
 		ignoreProperties(configuration, "baselineVersionAsString", "encodingAsString", "locationsAsStrings",
 				"targetAsString");
@@ -118,6 +126,8 @@ class FlywayPropertiesTests {
 		ignoreProperties(configuration, "shouldCreateSchemas");
 		// Getters for the DataSource settings rather than actual properties
 		ignoreProperties(configuration, "password", "url", "user");
+		// Properties not exposed by Flyway
+		ignoreProperties(configuration, "failOnMissingTarget");
 		List<String> configurationKeys = new ArrayList<>(configuration.keySet());
 		Collections.sort(configurationKeys);
 		List<String> propertiesKeys = new ArrayList<>(properties.keySet());

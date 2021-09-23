@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.springframework.boot.maven;
 
 import java.io.File;
@@ -36,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Andy Wilkinson
  */
 @ExtendWith(MavenBuildExtension.class)
-public class BuildInfoIntegrationTests {
+class BuildInfoIntegrationTests {
 
 	@TestTemplate
 	void buildInfoPropertiesAreGenerated(MavenBuild mavenBuild) {
@@ -60,6 +61,15 @@ public class BuildInfoIntegrationTests {
 				.hasBuildGroup("org.springframework.boot.maven.it").hasBuildArtifact("build-info-custom-build-time")
 				.hasBuildName("Generate build info with custom build time").hasBuildVersion("0.0.1.BUILD-SNAPSHOT")
 				.hasBuildTime("2019-07-08T08:00:00Z")));
+	}
+
+	@TestTemplate
+	void generatedBuildInfoReproducible(MavenBuild mavenBuild) {
+		mavenBuild.project("build-info-reproducible")
+				.execute(buildInfo((buildInfo) -> assertThat(buildInfo)
+						.hasBuildGroup("org.springframework.boot.maven.it").hasBuildArtifact("build-reproducible")
+						.hasBuildName("Generate build info with build time from project.build.outputTimestamp")
+						.hasBuildVersion("0.0.1.BUILD-SNAPSHOT").hasBuildTime("2021-04-21T11:22:33Z")));
 	}
 
 	@TestTemplate

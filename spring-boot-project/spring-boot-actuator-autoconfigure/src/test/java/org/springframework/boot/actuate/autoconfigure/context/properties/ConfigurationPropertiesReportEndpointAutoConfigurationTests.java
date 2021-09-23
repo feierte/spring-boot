@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2019 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 
 import org.springframework.boot.actuate.context.properties.ConfigurationPropertiesReportEndpoint;
 import org.springframework.boot.actuate.context.properties.ConfigurationPropertiesReportEndpoint.ApplicationConfigurationProperties;
+import org.springframework.boot.actuate.endpoint.SanitizingFunction;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -62,6 +63,22 @@ class ConfigurationPropertiesReportEndpointAutoConfigurationTests {
 				.withPropertyValues("management.endpoint.configprops.keys-to-sanitize: .*pass.*, property")
 				.withPropertyValues("management.endpoints.web.exposure.include=configprops")
 				.run(validateTestProperties("******", "******"));
+	}
+
+	@Test
+	void additionalKeysToSanitizeCanBeConfiguredViaTheEnvironment() {
+		this.contextRunner.withUserConfiguration(Config.class)
+				.withPropertyValues("management.endpoint.configprops.additional-keys-to-sanitize: property")
+				.withPropertyValues("management.endpoints.web.exposure.include=configprops")
+				.run(validateTestProperties("******", "******"));
+	}
+
+	@Test
+	void customSanitizingFunctionShouldBeApplied() {
+		this.contextRunner.withUserConfiguration(Config.class, SanitizingFunctionConfiguration.class)
+				.withPropertyValues("management.endpoints.web.exposure.include=configprops",
+						"test.my-test-property=abc")
+				.run(validateTestProperties("******", "$$$"));
 	}
 
 	@Test
@@ -117,6 +134,21 @@ class ConfigurationPropertiesReportEndpointAutoConfigurationTests {
 
 		public void setMyTestProperty(String myTestProperty) {
 			this.myTestProperty = myTestProperty;
+		}
+
+	}
+
+	@Configuration(proxyBeanMethods = false)
+	static class SanitizingFunctionConfiguration {
+
+		@Bean
+		SanitizingFunction testSanitizingFunction() {
+			return (data) -> {
+				if (data.getKey().contains("my")) {
+					return data.withValue("$$$");
+				}
+				return data;
+			};
 		}
 
 	}

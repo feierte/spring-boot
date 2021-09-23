@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import java.util.function.Consumer;
 
 import org.springframework.boot.buildpack.platform.docker.DockerApi;
 import org.springframework.boot.buildpack.platform.docker.LogUpdateEvent;
+import org.springframework.boot.buildpack.platform.docker.type.Binding;
 import org.springframework.boot.buildpack.platform.docker.type.ContainerConfig;
 import org.springframework.boot.buildpack.platform.docker.type.ContainerContent;
 import org.springframework.boot.buildpack.platform.docker.type.ContainerReference;
@@ -37,6 +38,7 @@ import org.springframework.util.Assert;
  *
  * @author Phillip Webb
  * @author Scott Frederick
+ * @author Jeroen Meijer
  */
 class Lifecycle implements Closeable {
 
@@ -138,11 +140,17 @@ class Lifecycle implements Closeable {
 			phase.withArgs("-process-type=web");
 		}
 		phase.withArgs(this.request.getName());
-		phase.withBinds(this.layersVolume, Directory.LAYERS);
-		phase.withBinds(this.applicationVolume, Directory.APPLICATION);
-		phase.withBinds(this.buildCacheVolume, Directory.CACHE);
-		phase.withBinds(this.launchCacheVolume, Directory.LAUNCH_CACHE);
+		phase.withBinding(Binding.from(this.layersVolume, Directory.LAYERS));
+		phase.withBinding(Binding.from(this.applicationVolume, Directory.APPLICATION));
+		phase.withBinding(Binding.from(this.buildCacheVolume, Directory.CACHE));
+		phase.withBinding(Binding.from(this.launchCacheVolume, Directory.LAUNCH_CACHE));
+		if (this.request.getBindings() != null) {
+			this.request.getBindings().forEach(phase::withBinding);
+		}
 		phase.withEnv(PLATFORM_API_VERSION_KEY, this.platformVersion.toString());
+		if (this.request.getNetwork() != null) {
+			phase.withNetworkMode(this.request.getNetwork());
+		}
 		return phase;
 	}
 

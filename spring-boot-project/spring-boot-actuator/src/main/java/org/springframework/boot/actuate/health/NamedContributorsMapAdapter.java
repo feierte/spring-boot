@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2019 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,11 +43,17 @@ abstract class NamedContributorsMapAdapter<V, C> implements NamedContributors<C>
 	NamedContributorsMapAdapter(Map<String, V> map, Function<V, ? extends C> valueAdapter) {
 		Assert.notNull(map, "Map must not be null");
 		Assert.notNull(valueAdapter, "ValueAdapter must not be null");
-		map.keySet().forEach((key) -> Assert.notNull(key, "Map must not contain null keys"));
+		map.keySet().forEach(this::validateKey);
 		map.values().stream().map(valueAdapter)
 				.forEach((value) -> Assert.notNull(value, "Map must not contain null values"));
 		this.map = Collections.unmodifiableMap(new LinkedHashMap<>(map));
 		this.valueAdapter = valueAdapter;
+	}
+
+	private void validateKey(String value) {
+		Assert.notNull(value, "Map must not contain null keys");
+		Assert.isTrue(!value.contains("/"), "Map keys must not contain a '/'");
+
 	}
 
 	@Override
