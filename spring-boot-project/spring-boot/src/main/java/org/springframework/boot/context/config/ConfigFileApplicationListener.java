@@ -118,6 +118,7 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 	private static final String DEFAULT_PROPERTIES = "defaultProperties";
 
 	// Note the order is from least to most specific (last one wins)
+	// 缺省的配置文件搜索路径（靠后的胜出）
 	private static final String DEFAULT_SEARCH_LOCATIONS = "classpath:/,classpath:/config/,file:./,file:./config/*/,file:./config/";
 
 	private static final String DEFAULT_NAMES = "application";
@@ -154,11 +155,15 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 
 	/**
 	 * The "config location" property name.
+	 *
+	 * @apiNote 这个配置会替换默认的扫描路径，建议使用 "spring.config.additional-location"
 	 */
 	public static final String CONFIG_LOCATION_PROPERTY = "spring.config.location";
 
 	/**
 	 * The "config additional location" property name.
+	 *
+	 * @apiNote 添加配置的扫描路径，注意如果同名在 resources 的配置文件会优先加载
 	 */
 	public static final String CONFIG_ADDITIONAL_LOCATION_PROPERTY = "spring.config.additional-location";
 
@@ -197,8 +202,10 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 
 	private void onApplicationEnvironmentPreparedEvent(ApplicationEnvironmentPreparedEvent event) {
 		List<EnvironmentPostProcessor> postProcessors = loadPostProcessors();
+		// 把自己也加入其中，因为自己也实现了 EnvironmentPostProcessor 接口
 		postProcessors.add(this);
 		AnnotationAwareOrderComparator.sort(postProcessors);
+		// 遍历处理器（EnvironmentPostProcessor）并依次执行其业务逻辑
 		for (EnvironmentPostProcessor postProcessor : postProcessors) {
 			postProcessor.postProcessEnvironment(event.getEnvironment(), event.getSpringApplication());
 		}
@@ -225,7 +232,9 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 	 * @see #addPostProcessors(ConfigurableApplicationContext)
 	 */
 	protected void addPropertySources(ConfigurableEnvironment environment, ResourceLoader resourceLoader) {
+		// 将 RandomValuePropertySource 添加到容器环境中
 		RandomValuePropertySource.addToEnvironment(environment);
+		// 开始进行加载操作
 		new Loader(environment, resourceLoader).load();
 	}
 

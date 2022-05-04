@@ -25,8 +25,8 @@ import java.util.Set;
  * @author Phillip Webb
  * @since 1.3.0
  *
- * @apiNote	ApplicationArguments接口提供对原始 String[] args参数以及已解析的选项和非选项参数的访问
- * 在具体使用Spring Boot的过程中，如果需要获得SpringApplication.run(args)方法传递的参数，那么可通过ApplicationArguments接口来获得。
+ * @apiNote	ApplicationArguments接口提供对原始 String[] args 参数以及已解析的选项和非选项参数的访问。
+ * 在具体使用Spring Boot的过程中，如果需要获得 SpringApplication.run(args) 方法传递的参数，那么可通过 ApplicationArguments 接口来获得。
  */
 public interface ApplicationArguments {
 
@@ -75,7 +75,7 @@ public interface ApplicationArguments {
 	 * @apiNote 返回与具有给定名称的参数选项关联的值集合。返回与具有给定名称的参数选项关联的值集合。
 	 * 如果选项存在且没有参数（例如：“--foo”），则返回空集合（[]）
 	 * 如果该选项存在且具有单个值（例如“--foo=bar”），则返回一个包含一个元素的集合（[“bar”]）
-	 * 如果选项存在并且有多个值（例如“--foo=bar--foo=baz”），则返回一个集合，其中每个值都有元素（[“bar”、“baz”]）
+	 * 如果选项存在并且有多个值（例如“--foo=bar --foo=baz”），则返回一个集合，其中每个值都有元素（[“bar”、“baz”]）
 	 * 如果选项不存在，则返回空值
 	 */
 	List<String> getOptionValues(String name);

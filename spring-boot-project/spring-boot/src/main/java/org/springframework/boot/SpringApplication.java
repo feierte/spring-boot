@@ -309,7 +309,7 @@ public class SpringApplication {
 		Collection<SpringBootExceptionReporter> exceptionReporters = new ArrayList<>();
 		// 设置jdk系统属性java.awt.headless，默认情况为true即开启
 		configureHeadlessProperty();
-		// （1）创建了应用的监听器SpringApplicationRunListeners  并开始监听
+		// （1）创建了应用的监听器 SpringApplicationRunListeners 并开始监听
 		SpringApplicationRunListeners listeners = getRunListeners(args);
 		// 触发启动事件，相应的监听器会被调用
 		listeners.starting();
@@ -385,22 +385,33 @@ public class SpringApplication {
 	private ConfigurableEnvironment prepareEnvironment(SpringApplicationRunListeners listeners,
 			ApplicationArguments applicationArguments) {
 		// Create and configure the environment
-		// 获取或创建环境（存在就直接返回，不存在创建一个再返回）
+		//1、根据SpringApplication对象webApplicationType属性实例化环境对象StandardServletEnvironment。
+		//2、通过环境对象构造器的方式初始化了所有系统环境变量、JDK系统变量、Servlet上下文参数、Servlet配置参数等信息。
+		// 这些初始化的数据通过Map数据KV结构存根对象(StubPropertySource)，按固定的顺序保存到CopyOnWriteArrayList集合中，保存的数据结构类似List<Map<String, Object>>，其中里面的Map的key为环境类型，value为对应环境的信息封装对象
 		ConfigurableEnvironment environment = getOrCreateEnvironment();
 		// 配置环境：配置PropertySources和active Profiles
+		//3、实例化ApplicationConversionService对象，通过构造器方式默认初始化了130多个类型转换器已经格式化组件。
+		//4、通过单独函数的方式解析main方法参数，如果有的话。
+		//5、尝试解析Active Profiles配置，实际这里不会解析到。
 		configureEnvironment(environment, applicationArguments.getSourceArgs());
+		//6、将MutablePropertySources封装为ConfigurationPropertySourcesPropertySource
 		ConfigurationPropertySources.attach(environment);
 		// listeners环境准备（就是广播ApplicationEnvironmentPreparedEvent事件）
+		// 这一步加载了用户自定义配置文件（application.properties等）
+		//7、发布环境对象准备完成事件，这一步很关键，也是本章继续分析的重点，因为整个application.properties或application.yml配置文件就是通过事件回调的方式去解析的。
 		listeners.environmentPrepared(environment);
 		// 将环境绑定到SpringApplication
+		//8、绑定spring.main开头的配置到SpringApplication对象对应的属性中。
 		bindToSpringApplication(environment);
 		// 如果非web环境，将环境转换成StandardEnvironment
 		if (!this.isCustomEnvironment) {
+			//9、根据根据第6步解析的spring.main.web-application-type配置值进行判断是否需要重新变换环境对象。如果spring.main.web-application-type有配置的话。
 			environment = new EnvironmentConverter(getClassLoader()).convertEnvironmentIfNecessary(environment,
 					deduceEnvironmentClass());
 		}
 		// 配置PropertySources对它自己的递归依赖
 		// 如果有attach到environment上的MutablePropertySources，则添加到environment的PropertySource中
+		//10、解除前面的MutablePropertySources封装
 		ConfigurationPropertySources.attach(environment);
 		return environment;
 	}
@@ -447,7 +458,7 @@ public class SpringApplication {
 		// 加载所有资源
 		Set<Object> sources = getAllSources();
 		Assert.notEmpty(sources, "Sources must not be empty");
-		// 加载我们的启动类，将启动类注入容器,为后续开启自动化配置奠定基础
+		// 加载我们的启动类，将启动类注入容器，为后续开启自动化配置奠定基础
 		load(context, sources.toArray(new Object[0]));
 		// 触发所有 SpringApplicationRunListener 监听器的 contextLoaded 事件方法
 		listeners.contextLoaded(context);

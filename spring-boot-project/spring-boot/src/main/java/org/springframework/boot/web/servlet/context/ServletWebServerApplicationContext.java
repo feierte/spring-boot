@@ -155,6 +155,12 @@ public class ServletWebServerApplicationContext extends GenericWebApplicationCon
 	protected void onRefresh() {
 		super.onRefresh();
 		try {
+			/*
+			 * 创建一个 WebServer 服务（默认 Tomcat），并初始化 ServletContext 上下文
+			 * 会先创建一个 {@link Tomcat} 容器并启动，同时会注册各种 Servlet
+			 * 例如 借助 {@link org.springframework.boot.autoconfigure.web.servlet.DispatcherServletAutoConfiguration}
+			 * 注册 {@link DispatcherServlet} 对象到 ServletContext 上下文，这样就可以通过 Spring MVC 的核心组件来实现一个 Web 应用
+			 */
 			createWebServer();
 		}
 		catch (Throwable ex) {
@@ -174,13 +180,17 @@ public class ServletWebServerApplicationContext extends GenericWebApplicationCon
 		WebServer webServer = this.webServer;
 		ServletContext servletContext = getServletContext();
 		if (webServer == null && servletContext == null) {
+			// 从 spring 容器中获取 ServletWebServerFactory 对象
 			ServletWebServerFactory factory = getWebServerFactory();
+			// 调用工厂的方法去生产 webServer
 			this.webServer = factory.getWebServer(getSelfInitializer());
 			getBeanFactory().registerSingleton("webServerGracefulShutdown",
 					new WebServerGracefulShutdownLifecycle(this.webServer));
 			getBeanFactory().registerSingleton("webServerStartStop",
 					new WebServerStartStopLifecycle(this, this.webServer));
 		}
+		// 如果上下文不是空的，那么可能就是tomcat初始化失败了，可以使用上下文去初始化 tomcat
+		// 小小的推敲一下，说明tomcat的启动的基本信息都可以在context里面找到
 		else if (servletContext != null) {
 			try {
 				getSelfInitializer().onStartup(servletContext);
@@ -189,6 +199,7 @@ public class ServletWebServerApplicationContext extends GenericWebApplicationCon
 				throw new ApplicationContextException("Cannot initialize servlet context", ex);
 			}
 		}
+		// 将 ServletContext 的一些初始化参数关联到当前 Spring 应用的 Environment 环境中
 		initPropertySources();
 	}
 
@@ -201,10 +212,12 @@ public class ServletWebServerApplicationContext extends GenericWebApplicationCon
 	protected ServletWebServerFactory getWebServerFactory() {
 		// Use bean names so that we don't consider the hierarchy
 		String[] beanNames = getBeanFactory().getBeanNamesForType(ServletWebServerFactory.class);
+		// spring容器中必须要存在一个实现接口 ServletWebServerFactory 的bean
 		if (beanNames.length == 0) {
 			throw new ApplicationContextException("Unable to start ServletWebServerApplicationContext due to missing "
 					+ "ServletWebServerFactory bean.");
 		}
+		// 如果有好几个实现的bean，也会报错，只允许存在一个，说明在springboot里面是不支持多个servlet容器并存的
 		if (beanNames.length > 1) {
 			throw new ApplicationContextException("Unable to start ServletWebServerApplicationContext due to multiple "
 					+ "ServletWebServerFactory beans : " + StringUtils.arrayToCommaDelimitedString(beanNames));
@@ -219,6 +232,9 @@ public class ServletWebServerApplicationContext extends GenericWebApplicationCon
 	 * @see #prepareWebApplicationContext(ServletContext)
 	 */
 	private org.springframework.boot.web.servlet.ServletContextInitializer getSelfInitializer() {
+		// 看到这里也许有人会疑惑，方法是有返回值的，怎么它返回了void
+		// 其实它是使用了lamda的匿名实现方式，换种写法可能更容易理解
+		// return servletContext -> selfInitialize(servletContext);
 		return this::selfInitialize;
 	}
 

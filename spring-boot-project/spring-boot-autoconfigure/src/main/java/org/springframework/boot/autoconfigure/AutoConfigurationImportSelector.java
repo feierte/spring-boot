@@ -129,12 +129,12 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 		// 获取注解的所有属性
 		AnnotationAttributes attributes = getAttributes(annotationMetadata);
 		// 获取到配置类的全路径字符串集合
-		// spring Boot在启动的时候，使用内部工具类SpringFactoriesLoader，查找classpath上所有jar包中的META-INF/spring.factories，
-		// 找出其中key为org.springframework.boot.autoconfigure.EnableAutoConfiguration的属性定义的工厂类名称，
+		// spring Boot在启动的时候，使用内部工具类 SpringFactoriesLoader，查找 classpath 上所有 jar 包中的 META-INF/spring.factories，
+		// 找出其中key为 org.springframework.boot.autoconfigure.EnableAutoConfiguration 的属性定义的工厂类名称，
 		// 将这些值作为自动配置类导入到容器中，自动配置类就生效了
 		List<String> configurations = getCandidateConfigurations(annotationMetadata, attributes);
 		// 去重
-		// 去除重复的配置类，若我们自己写的starter 可能存在重复的
+		// 去除重复的配置类，若我们自己写的 starter 可能存在与 Spring 官方提供的有重复
 		configurations = removeDuplicates(configurations);
 		// 检查并排除 exclude 和 excludeName这两个属性指定的类
 		Set<String> exclusions = getExclusions(annotationMetadata, attributes);
@@ -159,8 +159,8 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 		//@ConditionalOnNotWebApplication ： 非Web应用环境下起效
 
 		//总结一下判断是否要加载某个类的两种方式：
-		//根据spring-autoconfigure-metadata.properties进行判断。
-		//要判断@Conditional是否满足
+		//根据 spring-autoconfigure-metadata.properties 进行判断。
+		//要判断 @Conditional 是否满足
 		// 如@ConditionalOnClass({ SqlSessionFactory.class, SqlSessionFactoryBean.class })表示需要在类路径中存在SqlSessionFactory.class、SqlSessionFactoryBean.class这两个类才能完成自动注册。
 		configurations = getConfigurationClassFilter().filter(configurations);
 
@@ -217,9 +217,9 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 	 */
 	protected List<String> getCandidateConfigurations(AnnotationMetadata metadata, AnnotationAttributes attributes) {
 		/*
-		 * 这个方法需要传入两个参数getSpringFactoriesLoaderFactoryClass()和getBeanClassLoader()
-		 * getSpringFactoriesLoaderFactoryClass()这个方法返回的是EnableAutoConfiguration.class
-		 * getBeanClassLoader()这个方法返回的是beanClassLoader（类加载器）
+		 * 这个方法需要传入两个参数 getSpringFactoriesLoaderFactoryClass() 和 getBeanClassLoader()
+		 * getSpringFactoriesLoaderFactoryClass() 这个方法返回的是 EnableAutoConfiguration.class
+		 * getBeanClassLoader() 这个方法返回的是 beanClassLoader（类加载器）
 		 */
 		List<String> configurations = SpringFactoriesLoader.loadFactoryNames(getSpringFactoriesLoaderFactoryClass(),
 				getBeanClassLoader());

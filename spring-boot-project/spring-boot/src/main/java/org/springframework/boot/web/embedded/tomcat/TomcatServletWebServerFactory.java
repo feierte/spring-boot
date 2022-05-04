@@ -177,6 +177,7 @@ public class TomcatServletWebServerFactory extends AbstractServletWebServerFacto
 			Registry.disableRegistry();
 		}
 		Tomcat tomcat = new Tomcat();
+		// 创建一个 Tomcat 临时目录（退出时删除）
 		File baseDir = (this.baseDirectory != null) ? this.baseDirectory : createTempDir("tomcat");
 		tomcat.setBaseDir(baseDir.getAbsolutePath());
 		Connector connector = new Connector(this.protocol);

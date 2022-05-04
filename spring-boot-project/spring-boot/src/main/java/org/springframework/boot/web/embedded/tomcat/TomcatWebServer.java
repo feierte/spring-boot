@@ -101,6 +101,7 @@ public class TomcatWebServer implements WebServer {
 		this.tomcat = tomcat;
 		this.autoStart = autoStart;
 		this.gracefulShutdown = (shutdown == Shutdown.GRACEFUL) ? new GracefulShutdown(tomcat) : null;
+		// 初始化 TomcatWebServer
 		initialize();
 	}
 
@@ -120,6 +121,7 @@ public class TomcatWebServer implements WebServer {
 				});
 
 				// Start the server to trigger initialization listeners
+				// 启动 tomcat，并触发启动监听事件，然后做一下 StandardServer 对象的初始化
 				this.tomcat.start();
 
 				// We can re-throw failure exception directly in the main thread
@@ -134,6 +136,7 @@ public class TomcatWebServer implements WebServer {
 
 				// Unlike Jetty, all Tomcat threads are daemon threads. We create a
 				// blocking non-daemon to stop immediate shutdown
+				// 跟jetty不一样的是，tomcat里面的线程都是守护线程，主线程停止，子线程当即停止
 				startDaemonAwaitThread();
 			}
 			catch (Exception ex) {
@@ -213,6 +216,10 @@ public class TomcatWebServer implements WebServer {
 				addPreviouslyRemovedConnectors();
 				Connector connector = this.tomcat.getConnector();
 				if (connector != null && this.autoStart) {
+					/*
+					 * 对每一个 TomcatEmbeddedContext 中的 Servlet 进行加载并初始化，先找到容器中所有的 {@link org.apache.catalina.Wrapper}，
+					 * Wrapper是对 {@link javax.servlet.Servlet} 的封装，依次加载并初始化它们
+					 */
 					performDeferredLoadOnStartup();
 				}
 				checkThatConnectorsHaveStarted();

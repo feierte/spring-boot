@@ -33,15 +33,15 @@ import org.springframework.core.io.support.SpringFactoriesLoader;
  * @author Andy Wilkinson
  * @since 1.0.0
  *
- * @apiNote SpringApplicationRunListener接口规定了SpringBoot的生命周期，在各个生命周期广播相应的事件，调用实际的ApplicationListener类。
- * SpringApplication#run() 方法的监听器，可以通过实现这个接口 在Spring Boot 启动初始化的各个阶段加入自己的逻辑。
+ * @apiNote SpringApplicationRunListener 接口规定了 SpringApplication 的生命周期，在各个生命周期广播相应的事件，调用实际的 ApplicationListener 类。
+ * SpringApplication#run() 方法的监听器，可以通过实现这个接口在 Spring Boot 启动初始化的各个阶段加入自己的逻辑。
  *
  * 事件源：SpringApplication
  * 事件：ApplicationStartingEvent
  * 监听器：过滤后的监听器
  * 事件环境：EventPublishingListener，提供环境支持事件，并且发布事件（starting方法）
  *
- * <p>SpringApplicationRunListener 的作用是在SpringApplication 的各个启动过程中，监听各个阶段的变化，
+ * <p>SpringApplicationRunListener 的作用是在 SpringApplication 的各个启动过程中，监听各个阶段的变化，
  * 并将每个阶段封装成事件（ApplicationEvent），发布出去。让其他监听这些事件的监听器能探测到，并调用到对应的处理方法
  */
 public interface SpringApplicationRunListener {
@@ -50,8 +50,8 @@ public interface SpringApplicationRunListener {
 	 * Called immediately when the run method has first started. Can be used for very
 	 * early initialization.
 	 *
-	 * @apiNote SpringApplication#run方法执行的时候立马执行（用在非常早期的阶段）；对应事件的类型是ApplicationStartedEvent
-	 * 通知对应的监听器，SpringBoot开始执行了
+	 * @apiNote SpringApplication#run 方法执行的时候立马执行（用在非常早期的阶段）；对应事件的类型是 ApplicationStartedEvent
+	 * 通知对应的监听器，SpringBoot 开始执行了
 	 */
 	default void starting() {
 	}

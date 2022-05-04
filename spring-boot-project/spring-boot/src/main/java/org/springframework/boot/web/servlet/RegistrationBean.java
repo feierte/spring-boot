@@ -34,6 +34,8 @@ import org.springframework.util.StringUtils;
  * @see FilterRegistrationBean
  * @see DelegatingFilterProxyRegistrationBean
  * @see ServletListenerRegistrationBean
+ *
+ * @apiNote 基于 Servlet 3.0+，往 ServletContext 注册 Servlet、Filter 和 EventListener
  */
 public abstract class RegistrationBean implements ServletContextInitializer, Ordered {
 

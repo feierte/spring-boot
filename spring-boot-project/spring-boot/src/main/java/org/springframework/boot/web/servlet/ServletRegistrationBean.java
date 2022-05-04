@@ -186,6 +186,7 @@ public class ServletRegistrationBean<T extends Servlet> extends DynamicRegistrat
 	@Override
 	protected void configure(ServletRegistration.Dynamic registration) {
 		super.configure(registration);
+		// 设置需要拦截的 URL，默认为 "/*"
 		String[] urlMapping = StringUtils.toStringArray(this.urlMappings);
 		if (urlMapping.length == 0 && this.alwaysMapUrl) {
 			urlMapping = DEFAULT_MAPPINGS;
