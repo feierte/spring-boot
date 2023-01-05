@@ -145,6 +145,10 @@ public interface Archive extends Iterable<Archive.Entry>, AutoCloseable {
 
 	/**
 	 * Represents a single entry in the archive.
+	 *
+	 * @apiNote 表示归档文件（Archive，在 Java 应用环境中，即是指 JAR 文件）中的一个资源。例如：目录、文件等其他实体。
+	 *
+	 * <p>类似于 Java SE 中的 java.util.jar.JarEntry。
 	 */
 	interface Entry {
 

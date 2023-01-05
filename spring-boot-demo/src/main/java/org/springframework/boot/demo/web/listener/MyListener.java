@@ -1,4 +1,4 @@
-package org.springframework.boot.demo.listener;
+package org.springframework.boot.demo.web.listener;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;

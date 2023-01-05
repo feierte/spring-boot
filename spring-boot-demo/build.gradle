@@ -21,11 +21,13 @@ dependencies {
     implementation(project(":spring-boot-project:spring-boot-autoconfigure"))
     implementation(project(":spring-boot-project:spring-boot-starters:spring-boot-starter-web"))
     implementation(project(":spring-boot-project:spring-boot-starters:spring-boot-starter-amqp"))
+    implementation(project(":spring-boot-project:spring-boot-tools:spring-boot-loader"))
     implementation("jakarta.validation:jakarta.validation-api")
 
     testImplementation(project(":spring-boot-project:spring-boot-starters:spring-boot-starter-test"))
     testImplementation(project(":spring-boot-project:spring-boot-tools:spring-boot-configuration-metadata"))
     // compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.16'
     implementation group: 'org.projectlombok', name: 'lombok', version: '1.18.18'
+    implementation group: 'org.springframework.boot', name: 'spring-boot-maven-plugin', version: '2.3.5.RELEASE'
 
 }

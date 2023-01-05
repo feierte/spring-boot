@@ -1,1 +1,1 @@
-org.springframework.boot.SpringApplicationRunListener=org.springframework.boot.demo.listener.MyListener
+org.springframework.boot.SpringApplicationRunListener=org.springframework.boot.demo.web.listener.MyListener
