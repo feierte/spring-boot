@@ -45,6 +45,10 @@ import java.util.regex.Pattern;
  * 因为 SpringBoot 的 Fat Jar 文件除了包含传统 Java Jar 中的资源外，还包含 SpringBoot 应用依赖的 Jar 包。
  * 换言之，Fat Jar 内部会嵌套 Jar 文件，当 SpringBoot 的 Fat Jar 被 java -jar 命令引导时，其内部的 Jar 文件依赖无法被
  * Java 标准中内建的 jar.Handler 当做 class path，所以需要替换。
+ * 还有一个原因，传统 Servlet 容器部署 web 应用，需要将压缩的 WAR 文件解压到对应目录下，然后再加载该目录中的资源。
+ * 而 SpringBoot 的可执行 WAR 文件则需要在不解压当前 WAR 文件的前提下，读取其中的资源，这也是为什么 spring-boot-loader 需要
+ * 覆盖内建 jar.Handler 协议的原因。
+ *
  */
 public class Handler extends URLStreamHandler {
 
