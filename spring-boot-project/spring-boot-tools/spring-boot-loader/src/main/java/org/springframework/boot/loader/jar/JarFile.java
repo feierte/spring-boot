@@ -409,6 +409,9 @@ public class JarFile extends AbstractJarFile implements Iterable<java.util.jar.J
 	/**
 	 * Register a {@literal 'java.protocol.handler.pkgs'} property so that a
 	 * {@link URLStreamHandler} will be located to deal with jar URLs.
+	 *
+	 * @apiNote 该方法利用了 {@link URLStreamHandler} 扩展机制，其实现由 {@link URL#getURLStreamHandler(String)} 提供。
+	 * 该方法就是将 SpringBoot 中 URLStreamHandler 的实现类 {@link Handler} 的包名添加到 Java 系统属性：java.protocol.handler.pkgs 中。
 	 */
 	public static void registerUrlProtocolHandler() {
 		String handlers = System.getProperty(PROTOCOL_HANDLER, "");

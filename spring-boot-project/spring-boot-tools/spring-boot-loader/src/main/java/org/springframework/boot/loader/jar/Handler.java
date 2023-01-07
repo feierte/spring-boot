@@ -37,6 +37,14 @@ import java.util.regex.Pattern;
  * @author Andy Wilkinson
  * @since 1.0.0
  * @see JarFile#registerUrlProtocolHandler()
+ *
+ * @apiNote 用于和 SpringBoot 中的 Fat Jar 建立 URLConnection 连接的流式协议处理器。
+ *
+ * <p>Java SE 中已经定义了 Jar 的 URLStreamHandler（{@link sun.net.www.protocol.jar.Handler}），为什么这里要重复定义一个新的？
+ * 并且在 SpringBoot 中，新的这个 jar.Handler 还会覆盖 Java 标准提供的 jar.Handler？
+ * 因为 SpringBoot 的 Fat Jar 文件除了包含传统 Java Jar 中的资源外，还包含 SpringBoot 应用依赖的 Jar 包。
+ * 换言之，Fat Jar 内部会嵌套 Jar 文件，当 SpringBoot 的 Fat Jar 被 java -jar 命令引导时，其内部的 Jar 文件依赖无法被
+ * Java 标准中内建的 jar.Handler 当做 class path，所以需要替换。
  */
 public class Handler extends URLStreamHandler {
 

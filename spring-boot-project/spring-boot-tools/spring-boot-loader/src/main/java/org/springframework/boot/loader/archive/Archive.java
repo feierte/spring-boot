@@ -35,6 +35,16 @@ import org.springframework.boot.loader.Launcher;
  * @author Phillip Webb
  * @since 1.0.0
  * @see JarFileArchive
+ *
+ * @apiNote Archive类 表示 SpringBoot 对归档文件的抽象，抽象为统一访问归档文件资源的逻辑层。
+ * 一个 Archive 可以是 jar（JarFileArchive），可以是一个文件目录（ExplodedArchive）。
+ *
+ * <p>Archive 概念。
+ * archive 即归档文件，这个概念在 linux 下比较常见，通常就是一个 tar/zip 格式的压缩包。
+ * Java 中的 jar 文件就是一个 zip 格式的压缩文件。
+ *
+ * <p>该接口有两个实现，分别是 {@link ExplodedArchive} 和 {@link JarFileArchive}.
+ * 前者用于在文件夹目录下寻找资源，后者用于在 jar 包环境中寻找资源。而在 SpringBoot 打包的 fat Jar 压缩文件中，则是使用后者。
  */
 public interface Archive extends Iterable<Archive.Entry>, AutoCloseable {
 
@@ -42,6 +52,8 @@ public interface Archive extends Iterable<Archive.Entry>, AutoCloseable {
 	 * Returns a URL that can be used to load the archive.
 	 * @return the archive URL
 	 * @throws MalformedURLException if the URL is malformed
+	 *
+	 * @apiNote 返回表示该 Archive 的 URL 路径。
 	 */
 	URL getUrl() throws MalformedURLException;
 
@@ -146,9 +158,12 @@ public interface Archive extends Iterable<Archive.Entry>, AutoCloseable {
 	/**
 	 * Represents a single entry in the archive.
 	 *
-	 * @apiNote 表示归档文件（Archive，在 Java 应用环境中，即是指 JAR 文件）中的一个资源。例如：目录、文件等其他实体。
+	 * @apiNote 表示归档文件（Archive，在 Java 应用环境中，即是指 JAR 文件）中的一个资源（包括文件和目录）。例如：目录、文件等其他实体。
 	 *
-	 * <p>类似于 Java SE 中的 java.util.jar.JarEntry。
+	 * <p> Entry 有两个实现类：{@link org.springframework.boot.loader.archive.JarFileArchive.JarFileEntry}
+	 * 和 {@link org.springframework.boot.loader.archive.ExplodedArchive.FileEntry}，
+	 * JarFileEntry 实现类是基于 java.util.jar.JarEntry 实现的，表示 FAT JAR 内的嵌入资源。，所以说类似于 Java SE 中的 java.util.jar.JarEntry
+	 * 而 FileEntry 是基于当前运行环境的文件系统实现的。所以这也从实现层面上证明了 JarLauncher 支持 JAR 和文件系统的两种启动方式。
 	 */
 	interface Entry {
 
@@ -161,6 +176,9 @@ public interface Archive extends Iterable<Archive.Entry>, AutoCloseable {
 		/**
 		 * Returns the name of the entry.
 		 * @return the name of the entry
+		 *
+		 * @apiNote 获取归档文件中资源的相对路径。
+		 * 例如 SpringBoot 应用打成的可执行 JAR 包，里面的资源路径有：META-INF/MANIFEST.MF 等资源路径。
 		 */
 		String getName();
 
