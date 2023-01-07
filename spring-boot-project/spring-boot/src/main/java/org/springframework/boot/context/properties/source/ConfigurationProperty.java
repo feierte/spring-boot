@@ -31,6 +31,8 @@ import org.springframework.util.ObjectUtils;
  * @author Phillip Webb
  * @author Madhura Bhave
  * @since 2.0.0
+ *
+ * @apiNote 配置属性来源。
  */
 public final class ConfigurationProperty implements OriginProvider, Comparable<ConfigurationProperty> {
 

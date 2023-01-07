@@ -42,6 +42,8 @@ import org.springframework.core.annotation.AliasFor;
  * @see ConstructorBinding
  * @see ConfigurationPropertiesBindingPostProcessor
  * @see EnableConfigurationProperties
+ *
+ * @apiNote 该注解用于将外部化配置中的配置项绑定到某个 Java 对象上。
  */
 @Target({ ElementType.TYPE, ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
