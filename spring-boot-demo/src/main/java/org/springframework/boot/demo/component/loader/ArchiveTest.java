@@ -38,8 +38,7 @@ public class ArchiveTest {
 		Iterator<Archive.Entry> iterator = jarFileArchive.iterator();
 		while (iterator.hasNext()) {
 			Archive.Entry entry = iterator.next();
-			// log.info("资源名称：{}", entry.getName());
-			System.out.println("资源名称: " + entry.getName());
+			log.info("资源名称：{}", entry.getName());
 		}
 	}
 

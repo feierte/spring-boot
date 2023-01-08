@@ -28,4 +28,5 @@ dependencies {
     testImplementation(project(":spring-boot-project:spring-boot-tools:spring-boot-configuration-metadata"))
     // compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.16'
     implementation group: 'org.projectlombok', name: 'lombok', version: '1.18.18'
+    annotationProcessor("org.projectlombok:lombok:1.18.18")
 }
