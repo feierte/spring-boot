@@ -25,6 +25,8 @@ import org.springframework.util.ObjectUtils;
  * @author Phillip Webb
  * @since 1.0.0
  * @see ConditionMessage
+ *
+ * @apiNote 条件注解的匹配结果
  */
 public class ConditionOutcome {
 

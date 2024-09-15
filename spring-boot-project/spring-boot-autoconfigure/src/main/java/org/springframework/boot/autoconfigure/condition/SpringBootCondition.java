@@ -35,6 +35,9 @@ import org.springframework.util.StringUtils;
  * @author Phillip Webb
  * @author Greg Turnquist
  * @since 1.0.0
+ *
+ * @apiNote springboot 中对 spring 接口 {@link Condition} 的基本实现，springboot 中的所有的 {@link Condition}
+ * 都应该实现该类。
  */
 public abstract class SpringBootCondition implements Condition {
 
@@ -44,6 +47,8 @@ public abstract class SpringBootCondition implements Condition {
 	public final boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
 		String classOrMethodName = getClassOrMethodName(metadata);
 		try {
+			// 进行条件匹配，该方法是抽象方法，需要子类具体实现
+			// ConditionOutcome 是匹配结果
 			ConditionOutcome outcome = getMatchOutcome(context, metadata);
 			logOutcome(classOrMethodName, outcome);
 			recordEvaluation(context, classOrMethodName, outcome);

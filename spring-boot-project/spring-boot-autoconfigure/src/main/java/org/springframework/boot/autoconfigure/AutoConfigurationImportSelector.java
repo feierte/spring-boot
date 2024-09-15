@@ -162,6 +162,7 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 		//根据 spring-autoconfigure-metadata.properties 进行判断。
 		//要判断 @Conditional 是否满足
 		// 如@ConditionalOnClass({ SqlSessionFactory.class, SqlSessionFactoryBean.class })表示需要在类路径中存在SqlSessionFactory.class、SqlSessionFactoryBean.class这两个类才能完成自动注册。
+		// 条件注解在这这里判断，判断时机：解析配置类
 		configurations = getConfigurationClassFilter().filter(configurations);
 
 		// 6. 将自动配置导入事件通知监听器
