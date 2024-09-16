@@ -55,6 +55,8 @@ import org.springframework.validation.annotation.Validated;
  *
  * @author Stephane Nicoll
  * @author Phillip Webb
+ *
+ * @apiNote 属性绑定工具类，专门用于处理 @ConfigurationProperties 注解的。
  */
 class ConfigurationPropertiesBinder {
 

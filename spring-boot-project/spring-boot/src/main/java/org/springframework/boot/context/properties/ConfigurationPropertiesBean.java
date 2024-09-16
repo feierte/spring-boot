@@ -56,11 +56,14 @@ import org.springframework.validation.annotation.Validated;
  * @since 2.2.0
  * @see #getAll(ApplicationContext)
  * @see #get(ApplicationContext, Object, String)
+ *
+ * @apiNote 用于获取 @ConfigurationProperties 注解修饰的 Bean
  */
 public final class ConfigurationPropertiesBean {
 
+	// 被 @ConfigurationProperties 修饰的 bean 名称
 	private final String name;
-
+	// 被 @ConfigurationProperties 修饰的 bean 对象
 	private final Object instance;
 
 	private final ConfigurationProperties annotation;

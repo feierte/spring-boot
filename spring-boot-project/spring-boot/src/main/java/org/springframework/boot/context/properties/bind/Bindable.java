@@ -37,17 +37,19 @@ import org.springframework.util.ObjectUtils;
  * @since 2.0.0
  * @see Bindable#of(Class)
  * @see Bindable#of(ResolvableType)
+ *
+ * @apiNote 封装了可以绑定的对象，例如将 server.port 绑定到 ServerProperties 上，那么 ServerProperties 就是可以绑定的对象。
  */
 public final class Bindable<T> {
 
 	private static final Annotation[] NO_ANNOTATIONS = {};
-
+	// 绑定对象的类型
 	private final ResolvableType type;
-
+    // 绑定对象的装箱类型，如果绑定对象的类型是基本数据类型，才有装箱类型
 	private final ResolvableType boxedType;
 
 	private final Supplier<T> value;
-
+	// 绑定对象上面的注解
 	private final Annotation[] annotations;
 
 	private Bindable(ResolvableType type, ResolvableType boxedType, Supplier<T> value, Annotation[] annotations) {

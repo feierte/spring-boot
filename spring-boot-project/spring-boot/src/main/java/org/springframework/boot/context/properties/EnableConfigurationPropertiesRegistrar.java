@@ -48,8 +48,11 @@ class EnableConfigurationPropertiesRegistrar implements ImportBeanDefinitionRegi
 
 	@SuppressWarnings("deprecation")
 	static void registerInfrastructureBeans(BeanDefinitionRegistry registry) {
+		// 注入了 ConfigurationPropertiesBindingPostProcessor 后置处理器，用于处理属性绑定
 		ConfigurationPropertiesBindingPostProcessor.register(registry);
+		// 注入了 BoundConfigurationProperties 对象，用于
 		BoundConfigurationProperties.register(registry);
+		// 这个 Bean 从 Spring 2.2.0 开始就被废弃了
 		ConfigurationBeanFactoryMetadata.register(registry);
 	}
 

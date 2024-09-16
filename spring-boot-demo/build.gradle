@@ -20,8 +20,10 @@ dependencies {
     implementation(project(":spring-boot-project:spring-boot"))
     implementation(project(":spring-boot-project:spring-boot-autoconfigure"))
     implementation(project(":spring-boot-project:spring-boot-starters:spring-boot-starter-web"))
-    implementation(project(":spring-boot-project:spring-boot-starters:spring-boot-starter-amqp"))
+//    implementation(project(":spring-boot-project:spring-boot-starters:spring-boot-starter-amqp"))
     implementation(project(":spring-boot-project:spring-boot-tools:spring-boot-loader"))
+    implementation(project(":spring-boot-project:spring-boot-actuator"))
+    implementation(project(":spring-boot-project:spring-boot-actuator-autoconfigure"))
     implementation("jakarta.validation:jakarta.validation-api")
 
     testImplementation(project(":spring-boot-project:spring-boot-starters:spring-boot-starter-test"))

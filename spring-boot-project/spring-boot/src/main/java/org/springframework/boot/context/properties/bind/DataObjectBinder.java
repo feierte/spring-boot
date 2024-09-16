@@ -27,6 +27,8 @@ import org.springframework.boot.context.properties.source.ConfigurationPropertyN
  * @author Madhura Bhave
  * @see JavaBeanBinder
  * @see ValueObjectBinder
+ *
+ * @apiNote 用于将 Environment 中的属性值绑定到对象上。
  */
 interface DataObjectBinder {
 

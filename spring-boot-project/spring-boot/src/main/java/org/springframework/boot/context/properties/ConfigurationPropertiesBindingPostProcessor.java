@@ -40,6 +40,8 @@ import org.springframework.util.Assert;
  * @author Stephane Nicoll
  * @author Madhura Bhave
  * @since 1.0.0
+ *
+ * @apiNote 处理 @ConfigurationProperties 注解的后置处理器
  */
 public class ConfigurationPropertiesBindingPostProcessor
 		implements BeanPostProcessor, PriorityOrdered, ApplicationContextAware, InitializingBean {
@@ -80,9 +82,11 @@ public class ConfigurationPropertiesBindingPostProcessor
 	}
 
 	private void bind(ConfigurationPropertiesBean bean) {
+		// 如果这个 bean 为空，或者已经处理过，则直接返回
 		if (bean == null || hasBoundValueObject(bean.getName())) {
 			return;
 		}
+		// 对 @ConstructorBinding 的校验，如果使用该注解但是没有找到合适的构造器，那么在这里抛出异常
 		Assert.state(bean.getBindMethod() == BindMethod.JAVA_BEAN, "Cannot bind @ConfigurationProperties for bean '"
 				+ bean.getName() + "'. Ensure that @ConstructorBinding has not been applied to regular bean");
 		try {
@@ -112,6 +116,7 @@ public class ConfigurationPropertiesBindingPostProcessor
 			definition.setRole(BeanDefinition.ROLE_INFRASTRUCTURE);
 			registry.registerBeanDefinition(BEAN_NAME, definition);
 		}
+		// 注册 ConfigurationPropertiesBinder 到 spring 容器中，用于属性绑定
 		ConfigurationPropertiesBinder.register(registry);
 	}
 
