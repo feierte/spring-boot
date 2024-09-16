@@ -32,14 +32,15 @@ import org.springframework.util.ObjectUtils;
  * @author Madhura Bhave
  * @since 2.0.0
  *
- * @apiNote 配置属性来源。
+ * @apiNote 表示配置文件中的一条配置
  */
 public final class ConfigurationProperty implements OriginProvider, Comparable<ConfigurationProperty> {
 
+	// 配置名称
 	private final ConfigurationPropertyName name;
-
+	// 配置值
 	private final Object value;
-
+	// 配置来源
 	private final Origin origin;
 
 	public ConfigurationProperty(ConfigurationPropertyName name, Object value, Origin origin) {

@@ -30,12 +30,16 @@ import org.springframework.core.io.support.SpringFactoriesLoader;
  * @author Dave Syer
  * @author Phillip Webb
  * @since 1.0.0
+ *
+ * @apiNote 属性源加载器。用于加载外部化配置文件，例如：application.properties、application.yml 等。
  */
 public interface PropertySourceLoader {
 
 	/**
 	 * Returns the file extensions that the loader supports (excluding the '.').
 	 * @return the file extensions
+	 *
+	 * @apiNote 返回该加载器支持的文件后缀名。
 	 */
 	String[] getFileExtensions();
 

@@ -385,20 +385,16 @@ public class SpringApplication {
 	private ConfigurableEnvironment prepareEnvironment(SpringApplicationRunListeners listeners,
 			ApplicationArguments applicationArguments) {
 		// Create and configure the environment
-		//1、根据SpringApplication对象webApplicationType属性实例化环境对象StandardServletEnvironment。
-		//2、通过环境对象构造器的方式初始化了所有系统环境变量、JDK系统变量、Servlet上下文参数、Servlet配置参数等信息。
-		// 这些初始化的数据通过Map数据KV结构存根对象(StubPropertySource)，按固定的顺序保存到CopyOnWriteArrayList集合中，保存的数据结构类似List<Map<String, Object>>，其中里面的Map的key为环境类型，value为对应环境的信息封装对象
+		// （1）创建 ConfigurableEnvironment 对象，这里一般创建的是 StandardServletEnvironment 对象。
+		// （2）利用 StandardServletEnvironment 默认构造函数初始化了所有系统环境变量、JDK系统变量、Servlet上下文参数、Servlet配置参数等信息。
 		ConfigurableEnvironment environment = getOrCreateEnvironment();
-		// 配置环境：配置PropertySources和active Profiles
-		//3、实例化ApplicationConversionService对象，通过构造器方式默认初始化了130多个类型转换器已经格式化组件。
-		//4、通过单独函数的方式解析main方法参数，如果有的话。
-		//5、尝试解析Active Profiles配置，实际这里不会解析到。
+		// 解析并加载用户指定的配置文件，将其作为 PropertySource 添加到环境对象中。
+		// 该方法默认会解析 application.properties 和 application.yml 等配置文件，并将其添加到 ConfigurableEnvironment 对象中。
 		configureEnvironment(environment, applicationArguments.getSourceArgs());
-		//6、将MutablePropertySources封装为ConfigurationPropertySourcesPropertySource
+		//将 MutablePropertySources 封装为 ConfigurationPropertySourcesPropertySource
 		ConfigurationPropertySources.attach(environment);
-		// listeners环境准备（就是广播ApplicationEnvironmentPreparedEvent事件）
 		// 这一步加载了用户自定义配置文件（application.properties等）
-		//7、发布环境对象准备完成事件，这一步很关键，也是本章继续分析的重点，因为整个application.properties或application.yml配置文件就是通过事件回调的方式去解析的。
+		// 发布环境对象准备完成事件，这一步很关键，也是本章继续分析的重点，因为整个 application.properties 或 application.yml 等配置文件就是通过事件回调的方式去解析的。
 		listeners.environmentPrepared(environment);
 		// 将环境绑定到SpringApplication
 		//8、绑定spring.main开头的配置到SpringApplication对象对应的属性中。
@@ -554,10 +550,12 @@ public class SpringApplication {
 	 */
 	protected void configureEnvironment(ConfigurableEnvironment environment, String[] args) {
 		if (this.addConversionService) {
+			// 实例化 ApplicationConversionService 对象，通过构造器方式默认初始化了 130 多个类型转换器。
 			ConversionService conversionService = ApplicationConversionService.getSharedInstance();
 			environment.setConversionService((ConfigurableConversionService) conversionService);
 		}
 		configurePropertySources(environment, args);
+		// 尝试解析Active Profiles配置，实际这里不会解析到。
 		configureProfiles(environment, args);
 	}
 
@@ -573,6 +571,7 @@ public class SpringApplication {
 		if (this.defaultProperties != null && !this.defaultProperties.isEmpty()) {
 			sources.addLast(new MapPropertySource("defaultProperties", this.defaultProperties));
 		}
+		// 解析 main 方法传入进来的参数，并添加到环境中
 		if (this.addCommandLineProperties && args.length > 0) {
 			String name = CommandLinePropertySource.COMMAND_LINE_PROPERTY_SOURCE_NAME;
 			if (sources.contains(name)) {

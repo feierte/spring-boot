@@ -48,6 +48,8 @@ import org.springframework.util.Assert;
  * @since 2.0.0
  * @see #of(CharSequence)
  * @see ConfigurationPropertySource
+ *
+ * @apiNote 配置文件中的配置名称，配置名称需按照该文档中规定的命名规则。
  */
 public final class ConfigurationPropertyName implements Comparable<ConfigurationPropertyName> {
 

@@ -193,6 +193,10 @@ class OriginTrackedPropertiesLoader {
 			}
 		}
 
+		/**
+		 * 跳过注释，注释以 # 或者 ! 开头
+		 * @throws IOException
+		 */
 		private void skipComment() throws IOException {
 			if (this.character == '#' || this.character == '!') {
 				while (this.character != '\n' && this.character != -1) {

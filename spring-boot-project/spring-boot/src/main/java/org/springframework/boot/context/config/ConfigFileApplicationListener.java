@@ -121,6 +121,9 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 	// 缺省的配置文件搜索路径（靠后的胜出）
 	private static final String DEFAULT_SEARCH_LOCATIONS = "classpath:/,classpath:/config/,file:./,file:./config/*/,file:./config/";
 
+	/**
+	 * 默认的配置文件名称，spring.config.name 的值将会替代这个默认的（如果配置的话）
+	 */
 	private static final String DEFAULT_NAMES = "application";
 
 	private static final Set<String> NO_SEARCH_NAMES = Collections.singleton(null);
@@ -323,14 +326,18 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 
 		private final ResourceLoader resourceLoader;
 
+		// 用于解析配置文件的解析器
 		private final List<PropertySourceLoader> propertySourceLoaders;
 
+		// 配置文件中指定的 profile
+		// spring.profiles.active spring.profiles.include spring.profiles.default 指定的 profile 都会存放到这
 		private Deque<Profile> profiles;
 
 		private List<Profile> processedProfiles;
 
 		private boolean activatedProfiles;
 
+		// 配置文件解析出来会以 PropertySources 的方法存放起来
 		private Map<Profile, MutablePropertySources> loaded;
 
 		private Map<DocumentsCacheKey, List<Document>> loadDocumentsCache = new HashMap<>();
@@ -344,6 +351,8 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 		}
 
 		void load() {
+			// 查看环境中是否有名称为 “defaultProperties” 的 PropertySource，如果有就封装成 FilteredPropertySource，然后回调下面这个方法,
+			// 如果没有，参数 defaultProperties 为 null，然后回调下面这个方法
 			FilteredPropertySource.apply(this.environment, DEFAULT_PROPERTIES, LOAD_FILTERED_PROPERTY,
 					(defaultProperties) -> {
 						this.profiles = new LinkedList<>();
@@ -356,12 +365,15 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 							if (isDefaultProfile(profile)) {
 								addProfileToEnvironment(profile.getName());
 							}
+							// 解析配置文件
 							load(profile, this::getPositiveProfileFilter,
 									addToLoaded(MutablePropertySources::addLast, false));
 							this.processedProfiles.add(profile);
 						}
 						load(null, this::getNegativeProfileFilter, addToLoaded(MutablePropertySources::addFirst, true));
+						// 配置文件中解析出来的 PropertySources 加到 Environment 中的最后
 						addLoadedPropertySources();
+						// 将所有加载的 profile，加到 Environment 中
 						applyActiveProfiles(defaultProperties);
 					});
 		}
@@ -374,16 +386,22 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 		private void initializeProfiles() {
 			// The default profile for these purposes is represented as null. We add it
 			// first so that it is processed first and has lowest priority.
+			// 添加一个为 null 的 profile。
+			// 因为就算用户配置了 spring.profiles.active=dev，不仅要加载 application-dev.yml 文件，application.yml 文件也需要被加载。
 			this.profiles.add(null);
 			Binder binder = Binder.get(this.environment);
+			// 获取 spring.profiles.active 配置项指定的 Profile
 			Set<Profile> activatedViaProperty = getProfiles(binder, ACTIVE_PROFILES_PROPERTY);
+			// 获取 spring.profiles.include 配置项指定的 Profile
 			Set<Profile> includedViaProperty = getProfiles(binder, INCLUDE_PROFILES_PROPERTY);
+			// 获取 SpringApplication#configureProfiles(...) 方法设置的 Profile
 			List<Profile> otherActiveProfiles = getOtherActiveProfiles(activatedViaProperty, includedViaProperty);
 			this.profiles.addAll(otherActiveProfiles);
 			// Any pre-existing active profiles set via property sources (e.g.
 			// System properties) take precedence over those added in config files.
 			this.profiles.addAll(includedViaProperty);
 			addActiveProfiles(activatedViaProperty);
+			// spring.profiles.active 和 spring.profiles.include 都没有配置，则使用 spring.profiles.default 指定的默认值
 			if (this.profiles.size() == 1) { // only has null profile
 				for (String defaultProfileName : this.environment.getDefaultProfiles()) {
 					Profile defaultProfile = new Profile(defaultProfileName, true);
@@ -453,6 +471,7 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 		}
 
 		private void load(Profile profile, DocumentFilterFactory filterFactory, DocumentConsumer consumer) {
+			// 查找配置文件的路径，依次遍历路径并解析配置文件
 			getSearchLocations().forEach((location) -> {
 				boolean isDirectory = location.endsWith("/");
 				Set<String> names = isDirectory ? getSearchNames() : NO_SEARCH_NAMES;
@@ -495,6 +514,7 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 			DocumentFilter profileFilter = filterFactory.getDocumentFilter(profile);
 			if (profile != null) {
 				// Try profile-specific file & profile section in profile file (gh-340)
+				// 如果 profile 不为空，那么就使用 prefix + “-” + profile + fileExtension 加载，比如：file:./config/application-dev.yml
 				String profileSpecificFile = prefix + "-" + profile + fileExtension;
 				load(loader, profileSpecificFile, profile, defaultFilter, consumer);
 				load(loader, profileSpecificFile, profile, profileFilter, consumer);
@@ -507,6 +527,7 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 				}
 			}
 			// Also try the profile-specific section (if any) of the normal file
+			// 最后，不管 profile 是否为空，都会通过 prefix + fileExtension 加载，比如：file:./config/application.yml
 			load(loader, prefix + fileExtension, profile, profileFilter, consumer);
 		}
 
@@ -515,6 +536,7 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 			Resource[] resources = getResources(location);
 			for (Resource resource : resources) {
 				try {
+					// 校验配置文件是否存在
 					if (resource == null || !resource.exists()) {
 						if (this.logger.isTraceEnabled()) {
 							StringBuilder description = getDescription("Skipped missing config ", location, resource,
@@ -523,6 +545,7 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 						}
 						continue;
 					}
+					// 校验文件扩展名不为空
 					if (!StringUtils.hasText(StringUtils.getFilenameExtension(resource.getFilename()))) {
 						if (this.logger.isTraceEnabled()) {
 							StringBuilder description = getDescription("Skipped empty config extension ", location,
@@ -539,7 +562,10 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 						}
 						continue;
 					}
+					// 读取配置文件中的配置，转换成 Document 对象
 					String name = "applicationConfig: [" + getLocationName(location, resource) + "]";
+					// （1）解析配置文件
+					// （2）配置文件中 spring.profiles.active 和 spring.profiles.include 的属性值封装为 Documnet 对象
 					List<Document> documents = loadDocuments(loader, name, resource);
 					if (CollectionUtils.isEmpty(documents)) {
 						if (this.logger.isTraceEnabled()) {
@@ -550,6 +576,7 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 						continue;
 					}
 					List<Document> loaded = new ArrayList<>();
+					// 将当前配置文件中解析出来的 spring.profiles.active 和 spring.profiles.include 指定的 profile 存起来，后续继续解析
 					for (Document document : documents) {
 						if (filter.match(document)) {
 							addActiveProfiles(document.getActiveProfiles());
@@ -558,6 +585,7 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 						}
 					}
 					Collections.reverse(loaded);
+					// 继续解析上一步中解析出来的 spring.profiles.active 和 spring.profiles.include 指定的 profile
 					if (!loaded.isEmpty()) {
 						loaded.forEach((document) -> consumer.accept(profile, document));
 						if (this.logger.isDebugEnabled()) {
