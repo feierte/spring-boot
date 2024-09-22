@@ -3,6 +3,9 @@ package org.springframework.boot.demo.component.logging;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.demo.web.server.tomcat.TomcatSpringApplication;
+
+import java.util.Collections;
 
 /**
  * @author Jie Zhao
@@ -13,7 +16,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class LoggingSpringApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(LoggingSpringApplication.class, args);
+		SpringApplication springApplication = new SpringApplication();
+		springApplication.setAdditionalProfiles("logging");
+
+		springApplication.addPrimarySources(Collections.singletonList(LoggingSpringApplication.class));
+		springApplication.run(args);
 		log.info("LoggingSpringApplication started successfully!");
 	}
 }

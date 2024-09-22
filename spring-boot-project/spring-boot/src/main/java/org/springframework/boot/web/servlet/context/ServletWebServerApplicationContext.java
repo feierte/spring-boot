@@ -232,8 +232,8 @@ public class ServletWebServerApplicationContext extends GenericWebApplicationCon
 	 * @see #prepareWebApplicationContext(ServletContext)
 	 */
 	private org.springframework.boot.web.servlet.ServletContextInitializer getSelfInitializer() {
-		// 看到这里也许有人会疑惑，方法是有返回值的，怎么它返回了void
-		// 其实它是使用了lamda的匿名实现方式，换种写法可能更容易理解
+		// 看到这里也许有人会疑惑，方法是有返回值的，怎么它返回了 void
+		// 其实它是使用了 lambda 的匿名实现方式，换种写法可能更容易理解
 		// return servletContext -> selfInitialize(servletContext);
 		return this::selfInitialize;
 	}
