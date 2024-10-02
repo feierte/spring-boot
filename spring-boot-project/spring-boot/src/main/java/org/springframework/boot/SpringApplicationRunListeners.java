@@ -30,6 +30,9 @@ import org.springframework.util.ReflectionUtils;
  * A collection of {@link SpringApplicationRunListener}.
  *
  * @author Phillip Webb
+ *
+ * @apiNote 事件监听器的集合，能够在 SpringBoot 应用的启动过程中的不同阶段提供自定义操作和扩展点。
+ * 它允许开发者在应用启动的不同阶段介入，执行一些特定的逻辑，比如在环境准备、上下文准备、加载等阶段进行干预。
  */
 class SpringApplicationRunListeners {
 
@@ -37,6 +40,7 @@ class SpringApplicationRunListeners {
 
 	private final List<SpringApplicationRunListener> listeners;
 
+	// todo: 这里 log 为什么要用构造函数传进来，不直接给成员变量赋值，这样做的好处是什么？
 	SpringApplicationRunListeners(Log log, Collection<? extends SpringApplicationRunListener> listeners) {
 		this.log = log;
 		this.listeners = new ArrayList<>(listeners);
