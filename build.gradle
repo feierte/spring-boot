@@ -28,6 +28,7 @@ allprojects {
 	group "org.springframework.boot"
 
 	repositories {
+		maven { url "https://mirrors.cloud.tencent.com/repository/maven/" }
 		mavenCentral()
 		if (version.contains('-')) {
 			maven { url "https://repo.spring.io/milestone" }

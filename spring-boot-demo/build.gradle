@@ -1,0 +1,34 @@
+plugins {
+    id 'java'
+}
+
+group = 'org.springframework.demo'
+version = '2.7.18'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.9.1')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+
+    annotationProcessor(project(":spring-boot-project:spring-boot-tools:spring-boot-configuration-processor"))
+
+    implementation(enforcedPlatform(project(":spring-boot-project:spring-boot-dependencies")))
+    implementation(project(":spring-boot-project:spring-boot"))
+    implementation(project(":spring-boot-project:spring-boot-autoconfigure"))
+    implementation(project(":spring-boot-project:spring-boot-starters:spring-boot-starter-web"))
+    implementation(project(":spring-boot-project:spring-boot-tools:spring-boot-loader"))
+    implementation(project(":spring-boot-project:spring-boot-actuator"))
+    implementation(project(":spring-boot-project:spring-boot-actuator-autoconfigure"))
+    implementation("jakarta.validation:jakarta.validation-api")
+    testImplementation(project(":spring-boot-project:spring-boot-starters:spring-boot-starter-test"))
+    testImplementation(project(":spring-boot-project:spring-boot-tools:spring-boot-configuration-metadata"))
+    implementation group: 'org.projectlombok', name: 'lombok', version: '1.18.30'
+    annotationProcessor("org.projectlombok:lombok:1.18.30")
+}
+
+test {
+    useJUnitPlatform()
+}
