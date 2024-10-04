@@ -2,6 +2,7 @@ package org.springframework.demo;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 
 /**
  * @author Jie Zhao
@@ -10,7 +11,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class Main {
 	public static void main(String[] args) {
-		SpringApplication.run(Main.class, args);
+		SpringApplicationBuilder builder = new SpringApplicationBuilder();
+		builder.sources(Main.class)
+				.main(Main.class)
+				.logStartupInfo(true)
+				.build(args)
+				.run(args);
+
+//		SpringApplication.run(Main.class, args);
 		System.out.println("Hello world!");
 	}
 }

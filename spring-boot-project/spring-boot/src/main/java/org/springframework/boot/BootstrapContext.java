@@ -30,6 +30,8 @@ import org.springframework.core.env.Environment;
  *
  * @author Phillip Webb
  * @since 2.4.0
+ *
+ * @apiNote 启动上下文。在 ApplicationContext 创建之前，提供一个启动上下文，通过该上下文可以获取到单例对象。
  */
 public interface BootstrapContext {
 

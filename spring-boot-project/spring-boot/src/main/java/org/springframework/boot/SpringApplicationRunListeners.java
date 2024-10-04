@@ -45,6 +45,7 @@ class SpringApplicationRunListeners {
 
 	private final ApplicationStartup applicationStartup;
 
+	// todo: 这里的 log 为啥不自己创建，而要从外部传入？这样的好处是什么？
 	SpringApplicationRunListeners(Log log, Collection<? extends SpringApplicationRunListener> listeners,
 			ApplicationStartup applicationStartup) {
 		this.log = log;

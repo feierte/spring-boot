@@ -24,6 +24,11 @@ package org.springframework.boot;
  * @since 2.4.5
  * @see SpringApplication#addBootstrapRegistryInitializer(BootstrapRegistryInitializer)
  * @see BootstrapRegistry
+ *
+ * @apiNote BootstrapRegistry 的初始化器，可以对 BootstrapRegistry 进行初始化的设置。
+ * <p>BootstrapRegistryInitializer 添加方式：</p>
+ * 	1.可以通过 spring.factory 文件中添加实现类
+ * 	2.{@link SpringApplication#addBootstrapRegistryInitializer(BootstrapRegistryInitializer)}
  */
 @FunctionalInterface
 public interface BootstrapRegistryInitializer {
