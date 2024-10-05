@@ -23,6 +23,9 @@ dependencies {
     implementation(project(":spring-boot-project:spring-boot-actuator"))
     implementation(project(":spring-boot-project:spring-boot-actuator-autoconfigure"))
     implementation("jakarta.validation:jakarta.validation-api")
+	implementation("org.hibernate.validator:hibernate-validator") {
+		exclude group: "javax.validation"
+	}
     testImplementation(project(":spring-boot-project:spring-boot-starters:spring-boot-starter-test"))
     testImplementation(project(":spring-boot-project:spring-boot-tools:spring-boot-configuration-metadata"))
     implementation group: 'org.projectlombok', name: 'lombok', version: '1.18.30'

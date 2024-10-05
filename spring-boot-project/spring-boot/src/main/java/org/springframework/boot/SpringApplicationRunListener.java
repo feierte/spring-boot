@@ -56,10 +56,6 @@ public interface SpringApplicationRunListener {
 			ConfigurableEnvironment environment) {
 	}
 
-	void starting();
-
-	void environmentPrepared(ConfigurableEnvironment environment);
-
 	/**
 	 * Called once the {@link ApplicationContext} has been created and prepared, but
 	 * before sources have been loaded.

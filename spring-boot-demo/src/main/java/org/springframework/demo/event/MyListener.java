@@ -17,6 +17,8 @@
 package org.springframework.demo.event;
 
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.boot.ConfigurableBootstrapContext;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringApplicationRunListener;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -30,12 +32,13 @@ public class MyListener implements SpringApplicationRunListener {
 	}
 
 	@Override
-	public void starting() {
+	public void starting(ConfigurableBootstrapContext bootstrapContext) {
 		System.out.println("starting...");
 	}
 
 	@Override
-	public void environmentPrepared(ConfigurableEnvironment environment) {
+	public void environmentPrepared(ConfigurableBootstrapContext bootstrapContext,
+			ConfigurableEnvironment environment) {
 		System.out.println("environmentPrepared...");
 	}
 

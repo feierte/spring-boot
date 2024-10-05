@@ -25,6 +25,8 @@ import org.springframework.boot.BootstrapRegistry;
 import org.springframework.boot.ConfigurableBootstrapContext;
 import org.springframework.boot.logging.DeferredLogFactory;
 
+
+
 /**
  * Strategy class that can be used to load {@link ConfigData} for a given
  * {@link ConfigDataResource}. Implementations should be added as {@code spring.factories}
