@@ -56,6 +56,9 @@ import org.springframework.util.StringUtils;
  *
  * @author Phillip Webb
  * @author Madhura Bhave
+ *
+ * @apiNote 该类是 springboot 配置数据加载和管理的核心组件，负责从多个源加载、解析和处理配置数据，
+ * 并将这些配置数据添加到当前应用的 Environment 中。
  */
 class ConfigDataEnvironment {
 

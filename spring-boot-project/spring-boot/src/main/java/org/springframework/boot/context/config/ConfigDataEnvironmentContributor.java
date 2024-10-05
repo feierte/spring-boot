@@ -50,6 +50,8 @@ import org.springframework.util.CollectionUtils;
  *
  * @author Phillip Webb
  * @author Madhura Bhave
+ *
+ * @apiNote 配置数据的贡献者，这些贡献者可以是配置文件、环境变量或者其他来源等等。
  */
 class ConfigDataEnvironmentContributor implements Iterable<ConfigDataEnvironmentContributor> {
 

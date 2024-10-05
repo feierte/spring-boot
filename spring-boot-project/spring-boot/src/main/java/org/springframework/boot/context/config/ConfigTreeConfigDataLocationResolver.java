@@ -32,6 +32,9 @@ import org.springframework.util.Assert;
  * @author Madhura Bhave
  * @author Phillip Webb
  * @since 2.4.0
+ *
+ * @apiNote 用于解析 Config Tree 类型的配置数据位置。Config Tree 是 SpringBoot2.4.0 引入的一种配置数据存储格式，
+ * 可以将配置文件以树形结构组织，使得配置文件之间的关系更加清晰。
  */
 public class ConfigTreeConfigDataLocationResolver implements ConfigDataLocationResolver<ConfigTreeConfigDataResource> {
 

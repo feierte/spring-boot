@@ -54,6 +54,8 @@ import org.springframework.core.io.ResourceLoader;
  * @author Phillip Webb
  * @author Madhura Bhave
  * @since 2.4.0
+ *
+ * @apiNote 负责定位和解析配置文件位置。内置了两个实现类：{@link StandardConfigDataLocationResolver}、{@link ConfigTreeConfigDataLocationResolver}
  */
 public interface ConfigDataLocationResolver<R extends ConfigDataResource> {
 
