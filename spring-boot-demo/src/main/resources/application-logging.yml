@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: logging-demo
+
+logging:
+  level:
+    root: info # 配置 root 日志级别为 info（即全局日志级别）
+    org.springframework.boot.demo.component.logging: debug # 配置 org.springframework.boot.demo.component.logging 这个包的日志级别为 debug
+    org.springframework.boot.demo.web: info
+  file: # springboot 默认将日志输出到控制台，如果想要日志输出到文件中需要配置 logging.file.name 和 logging.file.path，但这两个配置不能同时存在
+    name: C://Tools//JavaTools//JetBrains//IdeaProjects//spring-projects//spring-boot//spring-boot-demo//logs//logging-demo.log # 日志文件名，如果只设置了 logging.file.path，则该默认为 spring.log
+      # path: C://Tools//JavaTools//JetBrains//IdeaProjects//spring-projects//spring-boot//spring-boot-demo//logs # 日志文件目录
+      #config: classpath:logback-config.xml  # 指定日志配置文件路径，springboot 官方推荐优先使用带有 -spring 的文件名作为你的日志配置（如使用 logback-spring.xml，而不是 logback.xml），
+                                            # 命名为 logback-spring.xml 的日志配置文件，spring boot 可以为它添加一些 springboot 特有的配置项。
+                                            # 如果你既想完全掌控日志配置，但又不想用 logback.xml 作为 Logback 配置的名字，可以通过 logging.config 属性值来自定义日志配置文件路径及名称
+
+  # 日志配置文件的默认加载顺序，由高到低
+  # Logback：logback-spring.xml, logback-spring.groovy, logback.xml, logback.groovy
+  # Log4j：log4j-spring.properties, log4j-spring.xml, log4j.properties, log4j.xml
+  # Log4j2：log4j2-spring.xml, log4j2.xml
+  # JDK (Java Util Logging)：logging.properties

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ 	scan：当此属性设置为 true 时，配置文件如果发生改变，将会被重新加载，默认值为 true。
+ 	scanPeriod：设置监测配置文件是否有修改的时间间隔，如果没有给出时间单位，默认单位是毫秒。
+ 				当 scan 为 true 时，此属性生效。默认的时间间隔为 1 分钟。
+ 	debug：当此属性设置为 true 时，将打印出 logback 内部日志信息，实时查看 logback 运行状态。默认值为 false。
+ -->
+<configuration scan="true" scanPeriod="60 seconds" debug="false">
+	<!--
+	 	<contextName>： 每个 logger 都关联到 logger 上下文，默认上下文名称为 “default”。
+	 	但可以使用设置成其他名字，用于区分不同应用程序的记录。一旦设置，不能修改,可以通过 %contextName 来打印日志上下文名称。
+	 -->
+	<contextName>logging-demo</contextName>
+
+	<!--
+		<property>：用来定义变量值的标签， 有两个属性，name和 value；
+		其中 name 的值是变量的名称，value 的值时变量定义的值。
+		通过定义的值会被插入到 logger 上下文中。定义变量后，可以使 “${}” 来使用变量。
+	-->
+	<property name="LOG_PATH" value="C:\\Tools\\JavaTools\\JetBrains\\IdeaProjects\\spring-projects\\spring-boot\\spring-boot-demo\\logs"/>
+	<property name="LOG_FILE" value="${LOG_PATH}/spring-boot-logger.log"/>
+
+	<!--
+	 	<appender>：用来格式化日志输出，有两个属性 name 和 class，class 用来指定哪种输出策略，常用就是控制台输出策略和文件输出策略。
+	 -->
+	<!--输出到控制台-->
+	<appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+		<!--
+			ThresholdFilter：为系统定义的拦截器，例如我们用 ThresholdFilter 来过滤掉 ERROR 级别以下的日志不输出到文件中。
+			如果不用记得注释掉，不然你控制台会发现没日志。
+		-->
+		<!-- <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			 <level>ERROR</level>
+		 </filter>-->
+		<encoder>
+			<pattern>%d{HH:mm:ss.SSS} %contextName [%thread] %-5level %logger{36} - %msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<!--输出到文件-->
+	<appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${LOG_FILE}</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<!-- 定义了日志的切分方式——把每一天的日志归档到一个文件中 -->
+			<fileNamePattern>${LOG_PATH}/logging-demo.%d{yyyy-MM-dd}.log</fileNamePattern>
+			<!--
+				表示只保留最近30天的日志，以防止日志填满整个磁盘空间。
+				同理，可以使用 %d{yyyy-MM-dd_HH-mm} 来定义精确到分的日志切分方式。
+			-->
+			<maxHistory>30</maxHistory>
+		</rollingPolicy>
+		<encoder>
+			<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %contextName [%thread] %-5level %logger{36} - %msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<!-- <root>：该节点是必选节点，用来指定最基础的日志输出级别，只有一个 level 属性。 -->
+	<root level="info">
+		<appender-ref ref="console" />
+		<appender-ref ref="file" />
+	</root>
+
+	<!--
+		<logger>：用来设置某一个包或者具体的某一个类的日志打印级别、以及指定 <appender>。
+		该节点有三个属性：name、level、additivity。
+			name：用来指定受此 logger 约束的某一个包或者具体的某一个类。
+			level：用来设置打印级别，大小写无关：TRACE, DEBUG, INFO, WARN, ERROR, ALL 和 OFF，
+				还有一个特殊值 INHERITED 或者同义词 NULL，代表强制执行上级的级别。如果未设置此属性，那么当前 logger 将会继承上级的级别。
+			additivity：是否向上级 logger 传递打印信息。默认是 true。
+	-->
+	<!-- logback 为 java 中的包 -->
+	<logger name="org.springframework.boot.demo.web.controller" />
+
+	<!--additivity 是否向上级 logger 传递打印信息-->
+	<logger name="org.springframework.boot.demo.web.controller.HelloController" level="WARN" additivity="false">
+		<appender-ref ref="console"/>
+	</logger>
+</configuration>
