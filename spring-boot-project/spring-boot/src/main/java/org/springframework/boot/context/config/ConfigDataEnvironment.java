@@ -144,15 +144,20 @@ class ConfigDataEnvironment {
 		UseLegacyConfigProcessingException.throwIfRequested(binder);
 		this.logFactory = logFactory;
 		this.logger = logFactory.getLog(getClass());
+		// 从属性 spring.config.on-not-found 中获取文件找不到的执行逻辑
 		this.notFoundAction = binder.bind(ON_NOT_FOUND_PROPERTY, ConfigDataNotFoundAction.class)
 			.orElse(ConfigDataNotFoundAction.FAIL);
 		this.bootstrapContext = bootstrapContext;
 		this.environment = environment;
+		// 从 spring.factories 中获取 ConfigDataLocationResolver 实现。(可以自己实现，扩展点之一)
+		// 同时这里面会传入 boostrapContext/resourceLoader/Binder 等参数用于构造参数反射
 		this.resolvers = createConfigDataLocationResolvers(logFactory, bootstrapContext, binder, resourceLoader);
 		this.additionalProfiles = additionalProfiles;
 		this.environmentUpdateListener = (environmentUpdateListener != null) ? environmentUpdateListener
 				: ConfigDataEnvironmentUpdateListener.NONE;
+		// 初始化 loaders，从 spring.factories 中获取所有的 ConfigDataLoader 并用反射进行实例化
 		this.loaders = new ConfigDataLoaders(logFactory, bootstrapContext, resourceLoader.getClassLoader());
+		// 创建 ConfigDataEnvironmentContributors 对象，里面会根据 spring.config.import/location 等默认定位参数初始化Contributor
 		this.contributors = createContributors(binder);
 	}
 
@@ -224,9 +229,12 @@ class ConfigDataEnvironment {
 	 * {@link Environment}.
 	 */
 	void processAndApply() {
+		// 封装 ConfigDataImporter 对象，里面有解析 ConfigDataLocation -> ConfigDataResource 和 load ConfigDataResource -> ConfigData 之类的操作
 		ConfigDataImporter importer = new ConfigDataImporter(this.logFactory, this.notFoundAction, this.resolvers,
 				this.loaders);
 		registerBootstrapBinder(this.contributors, null, DENY_INACTIVE_BINDING);
+		// 加载和解析 ConfigDataLocation -> ConfigDataResource -> ConfigData，此时还没有导入到 Environment 中，
+		// 执行完毕之后应该都是 BOUND_IMPORT，且此时绑定了 spring.config/spring.profiles 相关的配置属性信息
 		ConfigDataEnvironmentContributors contributors = processInitial(this.contributors, importer);
 		ConfigDataActivationContext activationContext = createActivationContext(
 				contributors.getBinder(null, BinderOption.FAIL_ON_BIND_TO_INACTIVE_SOURCE));

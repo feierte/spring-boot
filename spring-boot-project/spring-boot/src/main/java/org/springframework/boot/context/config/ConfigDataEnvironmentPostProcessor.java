@@ -99,11 +99,14 @@ public class ConfigDataEnvironmentPostProcessor implements EnvironmentPostProces
 		try {
 			this.logger.trace("Post-processing environment to add config data");
 			resourceLoader = (resourceLoader != null) ? resourceLoader : new DefaultResourceLoader();
+			// 执行配置文件的加载和应用
 			getConfigDataEnvironment(environment, resourceLoader, additionalProfiles).processAndApply();
 		}
 		catch (UseLegacyConfigProcessingException ex) {
 			this.logger.debug(LogMessage.format("Switching to legacy config file processing [%s]",
 					ex.getConfigurationProperty()));
+			// 这里兼容了 springboot2.4 之前版本的实现,可以通过 spring.config.use-legacy-processing=true 来调整为之前的实现
+			// 若抛出 UseLegacyConfigProcessingException 异常则使用老的方式（ConfigFileApplicationListener）进行外部化配置文件加载
 			configureAdditionalProfiles(environment, additionalProfiles);
 			postProcessUsingLegacyApplicationListener(environment, resourceLoader);
 		}

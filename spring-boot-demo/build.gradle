@@ -9,6 +9,24 @@ repositories {
     mavenCentral()
 }
 
+// 将代码目录下的代码及配置文件复制到 resources/main 目录下
+//processResources {
+//	from('src/main/java/org/springframework/demo') {
+//		include '**/*.properties'
+//		include '**/*.yaml'
+//		include '**/*.yml'
+//	}
+//}
+
+// 将代码目录下的配置文件复制到 resources/main 目录下，如果当前目录下有子目录，也会将子目录复制过去
+sourceSets {
+	main {
+		resources {
+			srcDir 'src/main/java/org/springframework/demo/'
+		}
+	}
+}
+
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.9.1')
     testImplementation 'org.junit.jupiter:junit-jupiter'

@@ -16,19 +16,45 @@
 
 package org.springframework.demo.config;
 
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.MapPropertySource;
+import org.springframework.core.env.MutablePropertySources;
+import org.springframework.demo.binder.BinderSpringApplication;
 
 @SpringBootApplication
 public class ConfigurationSpringApplication {
 
+	@Value("${myapp.username:admin}")
+	private String username;
+
+	@Value("${myapp.password:admin}")
+	private String password;
+
 	public static void main(String[] args) {
 		SpringApplicationBuilder builder = new SpringApplicationBuilder();
-		SpringApplication application = builder.profiles("config")
+		SpringApplication application = builder
 				.main(ConfigurationSpringApplication.class)
 				.sources(ConfigurationSpringApplication.class)
 				.build(args);
-		application.run(args);
+
+		application.setAdditionalProfiles("config");
+
+		ConfigurableApplicationContext context = application.run(args);
+		String name = context.getEnvironment().getProperty("spring.application.name");
+		System.out.println(name);
+
+		ConfigurationSpringApplication bean = context.getBean(ConfigurationSpringApplication.class);
+		System.out.println(bean.username + ": " + bean.password);
 	}
+
 }

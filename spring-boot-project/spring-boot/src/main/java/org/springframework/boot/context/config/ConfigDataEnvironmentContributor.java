@@ -445,28 +445,38 @@ class ConfigDataEnvironmentContributor implements Iterable<ConfigDataEnvironment
 
 		/**
 		 * A root contributor used contain the initial set of children.
+		 *
+		 * @apiNote 包含所有的 contributors。
 		 */
 		ROOT,
 
 		/**
 		 * An initial import that needs to be processed.
+		 *
+		 * @apiNote 表示 contributor 刚刚创建。
 		 */
 		INITIAL_IMPORT,
 
 		/**
 		 * An existing property source that contributes properties but no imports.
+		 *
+		 * @apiNote 表示已经将内部的 PropertySource 添加到了 Environment。
 		 */
 		EXISTING,
 
 		/**
 		 * A contributor with {@link ConfigData} imported from another contributor but not
 		 * yet bound.
+		 *
+		 * @apiNote 刚解析构造好 ConfigData，还没有绑定 spring.config/spring.profiles 等环境参数。
 		 */
 		UNBOUND_IMPORT,
 
 		/**
 		 * A contributor with {@link ConfigData} imported from another contributor that
 		 * has been.
+		 *
+		 * @apiNote 已经绑定好环境参数阶段。
 		 */
 		BOUND_IMPORT,
 

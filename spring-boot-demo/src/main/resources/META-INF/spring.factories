@@ -1,1 +1,2 @@
 org.springframework.boot.SpringApplicationRunListener=org.springframework.demo.event.MyListener
+org.springframework.boot.env.EnvironmentPostProcessor=org.springframework.demo.config.ProfileEnvironmentPostProcessor
