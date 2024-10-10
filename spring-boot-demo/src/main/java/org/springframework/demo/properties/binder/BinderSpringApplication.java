@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.demo.binder;
+package org.springframework.demo.properties.binder;
 
 import java.util.List;
 import java.util.Map;
@@ -32,7 +32,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.demo.web.server.tomcat.TomcatSpringApplication;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 

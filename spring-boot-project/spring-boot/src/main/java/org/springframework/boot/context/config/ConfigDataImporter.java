@@ -51,10 +51,13 @@ class ConfigDataImporter {
 
 	private final ConfigDataNotFoundAction notFoundAction;
 
+	// 缓存作用，缓存了已经被解析过的配置文件资源 ConfigDataResource
 	private final Set<ConfigDataResource> loaded = new HashSet<>();
 
+	// 缓存作用，缓存了已经被解析过的配置文件路径 ConfigDataLocation
 	private final Set<ConfigDataLocation> loadedLocations = new HashSet<>();
 
+	// 缓存作用，缓存了已经被解析过的可选配置文件路径 ConfigDataLocation
 	private final Set<ConfigDataLocation> optionalLocations = new HashSet<>();
 
 	/**

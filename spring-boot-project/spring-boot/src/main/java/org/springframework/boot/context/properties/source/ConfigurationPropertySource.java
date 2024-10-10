@@ -31,6 +31,10 @@ import org.springframework.util.StringUtils;
  * @see ConfigurationPropertyName
  * @see OriginTrackedValue
  * @see #getConfigurationProperty(ConfigurationPropertyName)
+ *
+ * @apiNote ConfigurationPropertySource 是 springboot2.0 中用于属性绑定的新机制，它提供了更灵活的属性绑定规则和更好的类型安全支持，
+ * 而 PropertySource 更多是 spring 框架中用于加载属性文件的机制。两者可以协同工作，PropertySource 可以作为 ConfigurationPropertySource 的底层实现，
+ * 而 ConfigurationPropertySource 则提供了更高层次的抽象和更多的功能。
  */
 @FunctionalInterface
 public interface ConfigurationPropertySource {
@@ -99,6 +103,8 @@ public interface ConfigurationPropertySource {
 	 * @param source the Spring property source to adapt
 	 * @return an adapted source or {@code null} {@link SpringConfigurationPropertySource}
 	 * @since 2.4.0
+	 *
+	 * @apiNote 将 PropertySource 适配成 ConfigurationPropertySource。todo：为啥要这样做？这样做的好处是啥？
 	 */
 	static ConfigurationPropertySource from(PropertySource<?> source) {
 		if (source instanceof ConfigurationPropertySourcesPropertySource) {

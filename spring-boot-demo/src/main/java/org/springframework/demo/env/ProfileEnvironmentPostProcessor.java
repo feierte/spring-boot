@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-package org.springframework.demo.config;
+package org.springframework.demo.env;
 
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.boot.SpringApplication;
@@ -30,11 +32,19 @@ import org.springframework.core.env.MutablePropertySources;
  */
 public class ProfileEnvironmentPostProcessor implements EnvironmentPostProcessor {
 
+	private final String additionalLocation;
+
+	public ProfileEnvironmentPostProcessor(String additionalLocation) {
+		this.additionalLocation = additionalLocation;
+	}
+
 	@Override
 	public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {
 		MutablePropertySources propertySources = environment.getPropertySources();
-		propertySources.addLast(new MapPropertySource("config", Map.of("spring.config.additional-location", "optional:file:./application-config.properties")));
+		Map<String, Object> map = new HashMap<>();
+		map.put("spring.config.additional-location", this.additionalLocation);
+		propertySources.addLast(new MapPropertySource("config", map));
 
-		System.out.println(environment.getActiveProfiles());
+		System.out.println(">>>>>>>>>" + Arrays.toString(environment.getActiveProfiles()));
 	}
 }

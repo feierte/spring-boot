@@ -611,6 +611,7 @@ public final class ConfigurationPropertyName implements Comparable<Configuration
 	}
 
 	private static Elements elementsOf(CharSequence name, boolean returnNullIfInvalid, int parserCapacity) {
+		// 属性名不能为 null
 		if (name == null) {
 			Assert.isTrue(returnNullIfInvalid, "Name must not be null");
 			return null;
@@ -618,6 +619,8 @@ public final class ConfigurationPropertyName implements Comparable<Configuration
 		if (name.length() == 0) {
 			return Elements.EMPTY;
 		}
+
+		// 属性名不能以 "." 开头，也不能以 "." 结尾
 		if (name.charAt(0) == '.' || name.charAt(name.length() - 1) == '.') {
 			if (returnNullIfInvalid) {
 				return null;

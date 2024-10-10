@@ -53,6 +53,8 @@ public interface ConfigDataLoader<R extends ConfigDataResource> {
 	 * @param context the loader context
 	 * @param resource the resource to check.
 	 * @return if the resource is supported by this loader
+	 *
+	 * @apiNote 判断参数 resource 指定的资源能不能被当前加载器加载。
 	 */
 	default boolean isLoadable(ConfigDataLoaderContext context, R resource) {
 		return true;
@@ -65,6 +67,8 @@ public interface ConfigDataLoader<R extends ConfigDataResource> {
 	 * @return the loaded config data or {@code null} if the location should be skipped
 	 * @throws IOException on IO error
 	 * @throws ConfigDataResourceNotFoundException if the resource cannot be found
+	 *
+	 * @apiNote 加载指定的资源。
 	 */
 	ConfigData load(ConfigDataLoaderContext context, R resource)
 			throws IOException, ConfigDataResourceNotFoundException;

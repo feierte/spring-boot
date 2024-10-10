@@ -171,6 +171,7 @@ class ConfigDataEnvironment {
 		MutablePropertySources propertySources = this.environment.getPropertySources();
 		List<ConfigDataEnvironmentContributor> contributors = new ArrayList<>(propertySources.size() + 10);
 		PropertySource<?> defaultPropertySource = null;
+		// 遍历当前环境中的所有 propertySource，并为每个 propertySource 创建一个 ConfigDataEnvironmentContributor
 		for (PropertySource<?> propertySource : propertySources) {
 			if (DefaultPropertiesPropertySource.hasMatchingName(propertySource)) {
 				defaultPropertySource = propertySource;
@@ -181,6 +182,8 @@ class ConfigDataEnvironment {
 				contributors.add(ConfigDataEnvironmentContributor.ofExisting(propertySource));
 			}
 		}
+
+		// spring.config.import/additional-location/location 这些属性指定的配置文件也需要创建 contributor
 		contributors.addAll(getInitialImportContributors(binder));
 		if (defaultPropertySource != null) {
 			this.logger.trace("Creating wrapped config data contributor for default property source");
@@ -203,6 +206,9 @@ class ConfigDataEnvironment {
 		addInitialImportContributors(initialContributors, bindLocations(binder, IMPORT_PROPERTY, EMPTY_LOCATIONS));
 		addInitialImportContributors(initialContributors,
 				bindLocations(binder, ADDITIONAL_LOCATION_PROPERTY, EMPTY_LOCATIONS));
+		// spring.config.location 如果没有配置，就是用默认路径，即 classpath:/，classpath:/config，file:./ 等等这些
+		// 这里也证明了如果配置了 spring.config.location，就不会再去扫描默认路径下的配置文件
+		// todo: 即使配置了 spring.config.location，在这里也不起作用，还是去加载默认路径，why？
 		addInitialImportContributors(initialContributors,
 				bindLocations(binder, LOCATION_PROPERTY, DEFAULT_SEARCH_LOCATIONS));
 		return initialContributors;
@@ -233,8 +239,8 @@ class ConfigDataEnvironment {
 		ConfigDataImporter importer = new ConfigDataImporter(this.logFactory, this.notFoundAction, this.resolvers,
 				this.loaders);
 		registerBootstrapBinder(this.contributors, null, DENY_INACTIVE_BINDING);
-		// 加载和解析 ConfigDataLocation -> ConfigDataResource -> ConfigData，此时还没有导入到 Environment 中，
-		// 执行完毕之后应该都是 BOUND_IMPORT，且此时绑定了 spring.config/spring.profiles 相关的配置属性信息
+		// 处理类型为 INITIAL_IMPORT 的 contributor，到这里为 INITIAL_IMPORT 只的就是 spring.config.location 对应的资源，如果没配置的话就是默认路径对应的资源，
+		// 解析并加载路径下的配置文件
 		ConfigDataEnvironmentContributors contributors = processInitial(this.contributors, importer);
 		ConfigDataActivationContext activationContext = createActivationContext(
 				contributors.getBinder(null, BinderOption.FAIL_ON_BIND_TO_INACTIVE_SOURCE));

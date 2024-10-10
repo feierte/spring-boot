@@ -309,6 +309,9 @@ public class SpringApplicationBuilder {
 	 * Add more sources (configuration classes and components) to this application.
 	 * @param sources the sources to add
 	 * @return the current builder
+	 *
+	 * @apiNote 添加带有被 @SpringBootApplication 注解的类。在通常的 springboot 程序中一般指的是含有 main 方法的类，称之为启动类，
+	 * 因为 @SpringBootApplication 通常注解到启动类上。
 	 */
 	public SpringApplicationBuilder sources(Class<?>... sources) {
 		this.sources.addAll(new LinkedHashSet<>(Arrays.asList(sources)));

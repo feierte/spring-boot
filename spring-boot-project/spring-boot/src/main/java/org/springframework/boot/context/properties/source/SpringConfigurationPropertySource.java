@@ -49,6 +49,12 @@ import org.springframework.util.Assert;
  * @see #from(PropertySource)
  * @see PropertyMapper
  * @see SpringIterableConfigurationPropertySource
+ *
+ * @apiNote
+ *
+ * <p>relaxed binding（宽松绑定）</p>
+ * 即支持属性名的大小写不敏感、使用不同的命名风格（如驼峰命名法、下划线分隔等）来访问相同的属性。
+ * 这是通过 ConfigurationPropertyName 和 ConfigurationProperty 类来实现的，它们提供了一种类型安全的方式来处理配置属性
  */
 class SpringConfigurationPropertySource implements ConfigurationPropertySource {
 

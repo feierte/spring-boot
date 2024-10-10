@@ -43,6 +43,9 @@ import org.springframework.stereotype.Indexed;
  * @see ConstructorBinding
  * @see ConfigurationPropertiesBindingPostProcessor
  * @see EnableConfigurationProperties
+ *
+ * @apiNote 用于将外部配置（如 application.properties 或 application.yml 文件中的属性）映射到一个 Java 对象的属性中。
+ * 这个注解是 springboot 项目中处理配置的一种非常便捷的方式，它使得配置的加载和管理变得更加自动化和类型安全。
  */
 @Target({ ElementType.TYPE, ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)

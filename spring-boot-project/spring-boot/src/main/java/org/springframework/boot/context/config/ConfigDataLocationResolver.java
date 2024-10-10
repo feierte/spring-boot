@@ -64,6 +64,8 @@ public interface ConfigDataLocationResolver<R extends ConfigDataResource> {
 	 * @param context the location resolver context
 	 * @param location the location to check.
 	 * @return if the location is supported by this resolver
+	 *
+	 * @apiNote 判断参数 location 指定的路径能否被当前的解析器解析。
 	 */
 	boolean isResolvable(ConfigDataLocationResolverContext context, ConfigDataLocation location);
 
@@ -76,6 +78,8 @@ public interface ConfigDataLocationResolver<R extends ConfigDataResource> {
 	 * @throws ConfigDataLocationNotFoundException on a non-optional location that cannot
 	 * be found
 	 * @throws ConfigDataResourceNotFoundException if a resolved resource cannot be found
+	 *
+	 * @apiNote 将参数 location 指定的路径下配置文件解析为一个或者多个 ConfigDataResource。
 	 */
 	List<R> resolve(ConfigDataLocationResolverContext context, ConfigDataLocation location)
 			throws ConfigDataLocationNotFoundException, ConfigDataResourceNotFoundException;
@@ -91,6 +95,9 @@ public interface ConfigDataLocationResolver<R extends ConfigDataResource> {
 	 * @return a list of resolved locations in ascending priority order.
 	 * @throws ConfigDataLocationNotFoundException on a non-optional location that cannot
 	 * be found
+	 *
+	 * @apiNote 将参数 location 指定的路径下配置文件解析为一个或者多个 ConfigDataResource。
+	 * 这里会有个限制条件，只解析 profiles 参数指定的配置。
 	 */
 	default List<R> resolveProfileSpecific(ConfigDataLocationResolverContext context, ConfigDataLocation location,
 			Profiles profiles) throws ConfigDataLocationNotFoundException {

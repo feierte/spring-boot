@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package org.springframework.demo.config;
+package org.springframework.demo.web.server.tomcat;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.demo.env.ProfileEnvironmentPostProcessor;
 
 /**
@@ -26,11 +25,10 @@ import org.springframework.demo.env.ProfileEnvironmentPostProcessor;
  * @date 2024/10/6 9:52
  */
 @Configuration
-//@PropertySource("file:C:\\Tools\\JavaTools\\JetBrains\\IdeaProjects\\spring-projects\\spring-boot\\spring-boot-demo\\src\\main\\java\\org\\springframework\\demo\\config\\application-config.properties")
 public class AppConfig {
 
 	@Bean
 	public ProfileEnvironmentPostProcessor profileEnvironmentPostProcessor() {
-		return new ProfileEnvironmentPostProcessor("optional:file:./application-config.properties");
+		return new ProfileEnvironmentPostProcessor("optional:file:./application-tomcat.properties");
 	}
 }

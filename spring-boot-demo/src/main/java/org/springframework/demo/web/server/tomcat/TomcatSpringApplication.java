@@ -19,6 +19,7 @@ package org.springframework.demo.web.server.tomcat;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.context.ConfigurableApplicationContext;
 
 /**
  * @author Jie Zhao
@@ -30,10 +31,14 @@ public class TomcatSpringApplication {
 	public static void main(String[] args) {
 		SpringApplicationBuilder builder = new SpringApplicationBuilder();
 		// todo: builder 中的 main 方法和 sources 方法有什么区别？
-		builder.profiles("tomcat")
+		SpringApplication application = builder
 				.main(TomcatSpringApplication.class)
-				.sources(TomcatSpringApplication.class);
-		SpringApplication application = builder.build(args);
-		application.run();
+				.sources(TomcatSpringApplication.class)
+				.build(args);
+		application.setAdditionalProfiles("tomcat");
+		ConfigurableApplicationContext context = application.run(args);
+
+		String name = context.getEnvironment().getProperty("spring.application.name");
+		System.out.println(name);
 	}
 }
