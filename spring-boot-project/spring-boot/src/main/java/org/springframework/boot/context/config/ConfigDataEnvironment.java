@@ -157,7 +157,7 @@ class ConfigDataEnvironment {
 				: ConfigDataEnvironmentUpdateListener.NONE;
 		// 初始化 loaders，从 spring.factories 中获取所有的 ConfigDataLoader 并用反射进行实例化
 		this.loaders = new ConfigDataLoaders(logFactory, bootstrapContext, resourceLoader.getClassLoader());
-		// 创建 ConfigDataEnvironmentContributors 对象，里面会根据 spring.config.import/location 等默认定位参数初始化Contributor
+		// 将环境中已有的属性源以及需要导入配置的位置封装为 contributors
 		this.contributors = createContributors(binder);
 	}
 
@@ -179,11 +179,13 @@ class ConfigDataEnvironment {
 			else {
 				this.logger.trace(LogMessage.format("Creating wrapped config data contributor for '%s'",
 						propertySource.getName()));
+				// 将环境中已有的属性源封装为 EXISTING 类型的 contributor
 				contributors.add(ConfigDataEnvironmentContributor.ofExisting(propertySource));
 			}
 		}
 
 		// spring.config.import/additional-location/location 这些属性指定的配置文件也需要创建 contributor
+		// 封装为 INITIAL_IMPORT 类型的 contributor
 		contributors.addAll(getInitialImportContributors(binder));
 		if (defaultPropertySource != null) {
 			this.logger.trace("Creating wrapped config data contributor for default property source");
@@ -203,12 +205,14 @@ class ConfigDataEnvironment {
 
 	private List<ConfigDataEnvironmentContributor> getInitialImportContributors(Binder binder) {
 		List<ConfigDataEnvironmentContributor> initialContributors = new ArrayList<>();
+		// spring.config.import 指定的路径封装成 contributor
 		addInitialImportContributors(initialContributors, bindLocations(binder, IMPORT_PROPERTY, EMPTY_LOCATIONS));
+		// spring.config.additional-location 指定的路径封装成 contributor
 		addInitialImportContributors(initialContributors,
 				bindLocations(binder, ADDITIONAL_LOCATION_PROPERTY, EMPTY_LOCATIONS));
 		// spring.config.location 如果没有配置，就是用默认路径，即 classpath:/，classpath:/config，file:./ 等等这些
 		// 这里也证明了如果配置了 spring.config.location，就不会再去扫描默认路径下的配置文件
-		// todo: 即使配置了 spring.config.location，在这里也不起作用，还是去加载默认路径，why？
+		// todo: 即使配置了 spring.config.location，在这里也不起作用，还是去加载默认路径，why？是代码中配置没起作用？
 		addInitialImportContributors(initialContributors,
 				bindLocations(binder, LOCATION_PROPERTY, DEFAULT_SEARCH_LOCATIONS));
 		return initialContributors;
@@ -240,13 +244,14 @@ class ConfigDataEnvironment {
 				this.loaders);
 		registerBootstrapBinder(this.contributors, null, DENY_INACTIVE_BINDING);
 		// 处理类型为 INITIAL_IMPORT 的 contributor，到这里为 INITIAL_IMPORT 只的就是 spring.config.location 对应的资源，如果没配置的话就是默认路径对应的资源，
-		// 解析并加载路径下的配置文件
+		// 解析并加载路径下的配置文件，拿到所有可能得配置文件（application.properties或application.yml等等）
 		ConfigDataEnvironmentContributors contributors = processInitial(this.contributors, importer);
 		ConfigDataActivationContext activationContext = createActivationContext(
 				contributors.getBinder(null, BinderOption.FAIL_ON_BIND_TO_INACTIVE_SOURCE));
 		contributors = processWithoutProfiles(contributors, importer, activationContext);
 		activationContext = withProfiles(contributors, activationContext);
 		contributors = processWithProfiles(contributors, importer, activationContext);
+		// 将解析到的配置文件中的属性添加到环境中，即配置文件生效
 		applyToEnvironment(contributors, activationContext, importer.getLoadedLocations(),
 				importer.getOptionalLocations());
 	}

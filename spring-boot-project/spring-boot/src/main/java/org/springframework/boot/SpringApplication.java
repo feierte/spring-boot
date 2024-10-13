@@ -213,6 +213,7 @@ public class SpringApplication {
 
 	private List<ApplicationListener<?>> listeners;
 
+	// 默认属性，将会被 springboot 设置到 Environment 的最后位置，即优先级最低
 	private Map<String, Object> defaultProperties;
 
 	private List<BootstrapRegistryInitializer> bootstrapRegistryInitializers;
@@ -339,10 +340,20 @@ public class SpringApplication {
 	private ConfigurableEnvironment prepareEnvironment(SpringApplicationRunListeners listeners,
 			DefaultBootstrapContext bootstrapContext, ApplicationArguments applicationArguments) {
 		// Create and configure the environment
+		// 创建出 ConfigurableEnvironment
+		// 如果没有默认的，就会读取 META-INF/spring.factories 中 key 为 `ApplicationContextFactory.class.getName()` 的实例，
+		// 回调 ApplicationContextFactory#create(WebApplicationType) 方法生成 ConfigurableEnvironment
 		ConfigurableEnvironment environment = getOrCreateEnvironment();
+		/**
+		 * 配置环境，其实就是增加 Environment 中的 PropertySource
+		 * 		访问顺序：命令行参数 -> ...... -> 默认属性
+		 * 默认属性（defaultProperties）可以这样设置：{@link org.springframework.boot.SpringApplicationTests#defaultCommandLineArgs()}
+ 		 */
 		configureEnvironment(environment, applicationArguments.getSourceArgs());
+		// 将 ConfigurationPropertySourcesPropertySource 放到第一个位置
 		ConfigurationPropertySources.attach(environment);
 		listeners.environmentPrepared(bootstrapContext, environment);
+		// 默认属性（defaultProperties）移动到环境中的最后位置，即优先级最低
 		DefaultPropertiesPropertySource.moveToEnd(environment);
 		Assert.state(!environment.containsProperty("spring.main.environment-prefix"),
 				"Environment prefix cannot be set via properties.");
@@ -460,6 +471,7 @@ public class SpringApplication {
 		}
 		ConfigurableEnvironment environment = this.applicationContextFactory.createEnvironment(this.webApplicationType);
 		if (environment == null && this.applicationContextFactory != ApplicationContextFactory.DEFAULT) {
+			// servlet 环境创建的是 ApplicationServletEnvironment
 			environment = ApplicationContextFactory.DEFAULT.createEnvironment(this.webApplicationType);
 		}
 		return (environment != null) ? environment : new ApplicationEnvironment();
@@ -493,9 +505,13 @@ public class SpringApplication {
 	 */
 	protected void configurePropertySources(ConfigurableEnvironment environment, String[] args) {
 		MutablePropertySources sources = environment.getPropertySources();
+		// springboot 设置了默认属性（defaultProperties）
 		if (!CollectionUtils.isEmpty(this.defaultProperties)) {
+			// 将 defaultProperties 适配为 PropertySource，并放到环境中的最后位置，
+			// 如果环境中已经有了 defaultProperties，先合并，然后在存放到环境中的最后位置
 			DefaultPropertiesPropertySource.addOrMerge(this.defaultProperties, sources);
 		}
+		// 将 main 方法的参数 args 封装成 SimpleCommandLinePropertySource，放到环境中的最前位置
 		if (this.addCommandLineProperties && args.length > 0) {
 			String name = CommandLinePropertySource.COMMAND_LINE_PROPERTY_SOURCE_NAME;
 			if (sources.contains(name)) {

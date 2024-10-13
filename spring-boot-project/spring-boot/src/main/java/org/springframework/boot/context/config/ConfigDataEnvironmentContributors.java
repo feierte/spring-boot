@@ -98,11 +98,13 @@ class ConfigDataEnvironmentContributors implements Iterable<ConfigDataEnvironmen
 		int processed = 0;
 		while (true) {
 			ConfigDataEnvironmentContributor contributor = getNextToProcess(result, activationContext, importPhase);
+			// 所有的 contributor 都处理完了，返回最后的结果
 			if (contributor == null) {
 				this.logger.trace(LogMessage.format("Processed imports for of %d contributors", processed));
 				return result;
 			}
 			if (contributor.getKind() == Kind.UNBOUND_IMPORT) {
+				// todo：不处理 contributor，只将类型更新为 BOUND_IMPORT，这样理解对不对？
 				ConfigDataEnvironmentContributor bound = contributor.withBoundProperties(result, activationContext);
 				result = new ConfigDataEnvironmentContributors(this.logger, this.bootstrapContext,
 						result.getRoot().withReplacement(contributor, bound));
