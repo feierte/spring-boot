@@ -446,21 +446,21 @@ class ConfigDataEnvironmentContributor implements Iterable<ConfigDataEnvironment
 		/**
 		 * A root contributor used contain the initial set of children.
 		 *
-		 * @apiNote 包含所有的 contributors。
+		 * @apiNote 包含了一个或多个其他 contributor 的 contributor。
 		 */
 		ROOT,
 
 		/**
 		 * An initial import that needs to be processed.
 		 *
-		 * @apiNote 表示 contributor 刚刚创建。
+		 * @apiNote 表示初始导入的配置，即只知道该配置在哪个路径下，但还没有被解析
 		 */
 		INITIAL_IMPORT,
 
 		/**
 		 * An existing property source that contributes properties but no imports.
 		 *
-		 * @apiNote 表示已经将内部的 PropertySource 添加到了 Environment。
+		 * @apiNote 表示已经将配置数据封装为 PropertySource，并添加到了 Environment。
 		 */
 		EXISTING,
 
@@ -494,11 +494,15 @@ class ConfigDataEnvironmentContributor implements Iterable<ConfigDataEnvironment
 
 		/**
 		 * The phase before profiles have been activated.
+		 *
+		 * @apiNote 在 profile 生效前导入
 		 */
 		BEFORE_PROFILE_ACTIVATION,
 
 		/**
 		 * The phase after profiles have been activated.
+		 *
+		 * @apiNote 在 profile 生效后导入
 		 */
 		AFTER_PROFILE_ACTIVATION;
 

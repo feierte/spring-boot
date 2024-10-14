@@ -239,19 +239,25 @@ class ConfigDataEnvironment {
 	 * {@link Environment}.
 	 */
 	void processAndApply() {
-		// 封装 ConfigDataImporter 对象，里面有解析 ConfigDataLocation -> ConfigDataResource 和 load ConfigDataResource -> ConfigData 之类的操作
+		// 创建 ConfigDataImporter 对象，该对象用于加载配置数据，并将配置数据保存到 Contributors 中
 		ConfigDataImporter importer = new ConfigDataImporter(this.logFactory, this.notFoundAction, this.resolvers,
 				this.loaders);
 		registerBootstrapBinder(this.contributors, null, DENY_INACTIVE_BINDING);
-		// 处理类型为 INITIAL_IMPORT 的 contributor，到这里为 INITIAL_IMPORT 只的就是 spring.config.location 对应的资源，如果没配置的话就是默认路径对应的资源，
+		// 处理类型为 INITIAL_IMPORT 的 contributor，到这里为 INITIAL_IMPORT 只的就是 spring.config.location 对应的资源，
+		// 如果没配置的话就是默认路径对应的资源，并保存到 contributor 的 children 中，并标记为 BOUND_IMPORT。
 		// 解析并加载路径下的配置文件，拿到所有可能得配置文件（application.properties或application.yml等等）
 		ConfigDataEnvironmentContributors contributors = processInitial(this.contributors, importer);
+		// 创建 profile 上下文，用来保存当前项目激活的 profile
 		ConfigDataActivationContext activationContext = createActivationContext(
 				contributors.getBinder(null, BinderOption.FAIL_ON_BIND_TO_INACTIVE_SOURCE));
+		// 在不考虑 profile 的情况下，将 processInitial 那步未处理的 contributor 进行处理，同样保存到 contributor 的 children 下，并标记为 BOUND_IMPORT
 		contributors = processWithoutProfiles(contributors, importer, activationContext);
+		// 确定当前项目激活的 profile，并保存到 profile 上下文中 -> activationContext
 		activationContext = withProfiles(contributors, activationContext);
+		// 根据已确定的 profile，加载配置文件中的激活的 profile，保存到当前 contributor 的 children 中，并标记为 BOUND_IMPORT
 		contributors = processWithProfiles(contributors, importer, activationContext);
 		// 将解析到的配置文件中的属性添加到环境中，即配置文件生效
+		// 将 contributors 中标记为 BOUND_IMPORT 的配置数据添加到当前项目的运行环境中
 		applyToEnvironment(contributors, activationContext, importer.getLoadedLocations(),
 				importer.getOptionalLocations());
 	}

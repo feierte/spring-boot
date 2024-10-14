@@ -59,8 +59,10 @@ public class StandardConfigDataLocationResolver
 
 	private static final String PREFIX = "resource:";
 
+	// 指定配置文件的文件名称，如果 spring.config.name 属性没有设置值，那么默认的配置文件名称就是 application
 	static final String CONFIG_NAME_PROPERTY = "spring.config.name";
 
+	// 默认的配置文件名称，如果 spring.config.name 属性没有设置值，那么默认的配置文件名称就是 application
 	private static final String[] DEFAULT_CONFIG_NAMES = { "application" };
 
 	private static final Pattern URL_PREFIX = Pattern.compile("^([a-zA-Z][a-zA-Z0-9*]*?:)(.*$)");
@@ -71,6 +73,10 @@ public class StandardConfigDataLocationResolver
 
 	private final Log logger;
 
+	/**
+	 * 配置文件加载器，将配置文件中的属性加载到 PropertySource。
+	 * 有两种，分别负责解析 properties 和 yaml 文件：PropertiesPropertySourceLoader 和 YamlPropertySourceLoader。
+	 */
 	private final List<PropertySourceLoader> propertySourceLoaders;
 
 	private final String[] configNames;
