@@ -63,6 +63,8 @@ public abstract class RegistrationBean implements ServletContextInitializer, Ord
 	 * Register this bean with the servlet context.
 	 * @param description a description of the item being registered
 	 * @param servletContext the servlet context
+	 *
+	 * @apiNote 该方法作用是将 spring 容器管理的 bean 对象注册到 ServletContext 中。
 	 */
 	protected abstract void register(String description, ServletContext servletContext);
 

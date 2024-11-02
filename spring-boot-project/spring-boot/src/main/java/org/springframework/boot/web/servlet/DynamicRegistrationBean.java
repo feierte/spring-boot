@@ -45,6 +45,7 @@ public abstract class DynamicRegistrationBean<D extends Registration.Dynamic> ex
 
 	private boolean asyncSupported = true;
 
+	// servlet 的初始化参数
 	private Map<String, String> initParameters = new LinkedHashMap<>();
 
 	/**

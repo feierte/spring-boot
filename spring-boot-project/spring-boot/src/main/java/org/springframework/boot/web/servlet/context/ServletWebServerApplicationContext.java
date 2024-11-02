@@ -230,9 +230,20 @@ public class ServletWebServerApplicationContext extends GenericWebApplicationCon
 	}
 
 	private void selfInitialize(ServletContext servletContext) throws ServletException {
+		// 将当前的 Spring 应用上下文设置到 ServletContext 的属性中去，
+		// 同时将 ServletContext 上下文设置到 Spring 应用上下文中
 		prepareWebApplicationContext(servletContext);
+		// 向 Spring 应用上下文注册一个 ServletContextScope 对象（ServletContext 的封装）
+		// （这就是 application 这种 bean 作用域生效的根本原因）
 		registerApplicationScope(servletContext);
+		// 向 Spring 应用上下文注册 contextParameters 和 contextAttributes 属性
 		WebApplicationContextUtils.registerEnvironmentBeans(getBeanFactory(), servletContext);
+		/*
+		 * 【重点】先从 Spring 应用上下文找到所有的 ServletContextInitializer
+		 * 也就会找到各种 RegistrationBean，然后依次调用他们的 onStartup 方法，向 ServletContext 上下文注册 Servlet、Filter 和 EventListener
+		 * 例如 DispatcherServletAutoConfiguration、DispatcherServletRegistrationBean 就会注册 DispatcherServlet 对象
+		 * 所以这里执行完了，也就启动了 Tomcat，同时注册了所有的 Servlet，那么 Web 应用准备就绪了
+		 */
 		for (ServletContextInitializer beans : getServletContextInitializerBeans()) {
 			beans.onStartup(servletContext);
 		}
@@ -281,11 +292,13 @@ public class ServletWebServerApplicationContext extends GenericWebApplicationCon
 		}
 		servletContext.log("Initializing Spring embedded WebApplicationContext");
 		try {
+			// 将当前 ApplicationContext 设置到 ServletContext
 			servletContext.setAttribute(WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE, this);
 			if (logger.isDebugEnabled()) {
 				logger.debug("Published root WebApplicationContext as ServletContext attribute with name ["
 						+ WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE + "]");
 			}
+			// 同时也将 ServletContext 设置到当前 ApplicationContext
 			setServletContext(servletContext);
 			if (logger.isInfoEnabled()) {
 				long elapsedTime = System.currentTimeMillis() - getStartupDate();

@@ -39,6 +39,9 @@ import org.springframework.web.WebApplicationInitializer;
  * @author Phillip Webb
  * @since 1.4.0
  * @see WebApplicationInitializer
+ *
+ * @apiNote 功能和 {@code WebApplicationInitializer} 相同，不同之处在于 ServletContextInitializer 的生命周期是由 springboot 控制的，
+ * 而 {@code WebApplicationInitializer} 的生命周期是由 Servlet 容器控制的。
  */
 @FunctionalInterface
 public interface ServletContextInitializer {
