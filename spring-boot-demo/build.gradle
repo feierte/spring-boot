@@ -22,7 +22,9 @@ repositories {
 sourceSets {
 	main {
 		resources {
-			srcDir 'src/main/java/org/springframework/demo/'
+//			srcDir 'src/main/java/org/springframework/demo/'
+			srcDir 'src/main/java/org/springframework/demo/config/'
+			srcDir 'src/main/java/org/springframework/demo/web/server/tomcat/'
 		}
 	}
 }
