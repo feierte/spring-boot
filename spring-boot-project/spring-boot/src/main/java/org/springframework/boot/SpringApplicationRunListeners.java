@@ -36,6 +36,11 @@ import org.springframework.util.ReflectionUtils;
  * @author Phillip Webb
  * @author Andy Wilkinson
  * @author Chris Bono
+ *
+ * @apiNote SpringApplicationRunListeners 是对多个 SpringApplicationListener 的封装和代理，负责在 Spring Boot 启动过程中，统一向所有注册的监听器发送事件通知。
+ * 它本身不处理具体逻辑，而是将事件广播给所有注册的监听器。
+ * <p>它本身不暴露给开发者直接使用，而是由 SpringApplication 内部管理，开发者更多是通过实现 SpringApplicationListener 或使用 @EventListener 来响应这些事件。<p/>
+ * <p>如果你需要监控或干预 Spring Boot 的启动过程，理解这个类的作用是非常有帮助的。<p/>
  */
 class SpringApplicationRunListeners {
 

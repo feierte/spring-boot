@@ -213,7 +213,40 @@ public class SpringApplication {
 
 	private List<ApplicationListener<?>> listeners;
 
-	// 默认属性，将会被 springboot 设置到 Environment 的最后位置，即优先级最低
+	/**
+	 * 默认属性，为 Spring Boot 应用提供“最低优先级”的默认配置值，当没有其他配置源提供该属性时，这些默认值将生效。
+	 * 将会被 springboot 设置到 Environment 的最后位置，即优先级最低。确保在没有其他配置时应用仍能以合理的方式运行。
+	 * <p>典型使用场景<p/>
+	 * 1.设置全局默认值（防空或防错）
+	 * <pre>{@code
+	 * 	public static void main(String[] args) {
+	 *     SpringApplication app = new SpringApplication(MyApplication.class);
+	 *     // 设置默认端口，如果配置文件或命令行未指定，则使用 8080
+	 *     app.setDefaultProperties(Collections.singletonMap("server.port", "8080"));
+	 *     app.run(args);
+	 * 	}
+	 * }</pre>
+	 * 2.根据环境动态设置默认值
+	 * <pre>{@code
+	 * Map<String, Object> defaults = new HashMap<>();
+	 * defaults.put("logging.level.root", "INFO");
+	 * defaults.put("management.endpoints.enabled-by-default", "false");
+	 *
+	 * SpringApplication app = new SpringApplication(MyApp.class);
+	 * app.setDefaultProperties(defaults);
+	 * app.run(args);
+	 * }</pre>
+	 *
+	 * 3.结合条件逻辑设置默认行为
+	 * <pre>{@code
+	 * if (!System.getenv().containsKey("KUBERNETES_SERVICE_HOST")) {
+	 *     // 非 K8s 环境下，关闭某些监控端点
+	 *     app.setDefaultProperties(
+	 *         Collections.singletonMap("management.health.db.enabled", "false")
+	 *     );
+	 * }
+	 * }</pre>
+	 */
 	private Map<String, Object> defaultProperties;
 
 	private List<BootstrapRegistryInitializer> bootstrapRegistryInitializers;
