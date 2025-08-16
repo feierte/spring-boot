@@ -29,6 +29,9 @@ import org.springframework.core.env.PropertySource;
  *
  * @author Phillip Webb
  * @author Madhura Bhave
+ *
+ * @apiNote 使用了适配器模式，将 ConfigurationPropertySource 适配成了 PropertySource，这样就可以被 PropertyResolver 使用，
+ * 或者添加到 Environment。
  */
 class ConfigurationPropertySourcesPropertySource extends PropertySource<Iterable<ConfigurationPropertySource>>
 		implements OriginLookup<String> {

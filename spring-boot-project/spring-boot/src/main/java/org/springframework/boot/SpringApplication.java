@@ -250,7 +250,7 @@ public class SpringApplication {
 
 	/**
 	 * Create a new {@link SpringApplication} instance. The application context will load
-	 * beans from the specified primary sources (see {@link SpringApplication class-level}
+	 * beans from the spceified primary sources (see {@link SpringApplication class-level}
 	 * documentation for details). The instance can be customized before calling
 	 * {@link #run(String...)}.
 	 * @param resourceLoader the resource loader to use
@@ -350,7 +350,12 @@ public class SpringApplication {
 		 * 默认属性（defaultProperties）可以这样设置：{@link org.springframework.boot.SpringApplicationTests#defaultCommandLineArgs()}
  		 */
 		configureEnvironment(environment, applicationArguments.getSourceArgs());
-		// 将 ConfigurationPropertySourcesPropertySource 放到第一个位置
+		/**
+		 * 作用是 将 Environment 中的属性源（Property Sources）进行适配和封装，使其支持新的 ConfigurationPropertySource 接口，
+		 * 从而为 SpringBoot 的类型安全配置属性（如 @ConfigurationProperties）提供更强大、更一致的属性查找能力。
+		 * <p>为 Spring Boot 的 @ConfigurationProperties 功能提供支持，将标准的 Environment 中的属性源
+		 * 适配为支持松散绑定、嵌套结构等特性的 ConfigurationPropertySource，确保类型安全配置能够正确、灵活地绑定配置属性。
+		 */
 		ConfigurationPropertySources.attach(environment);
 		listeners.environmentPrepared(bootstrapContext, environment);
 		// 默认属性（defaultProperties）移动到环境中的最后位置，即优先级最低
