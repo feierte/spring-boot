@@ -35,6 +35,8 @@ import org.springframework.core.io.support.SpringFactoriesLoader;
  * @author Andy Wilkinson
  * @author Chris Bono
  * @since 1.0.0
+ *
+ * @apiNote 监听 SpringBoot 启动时的各个阶段发生的事件。
  */
 public interface SpringApplicationRunListener {
 
