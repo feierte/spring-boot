@@ -19,15 +19,15 @@ repositories {
 //}
 
 // 将代码目录下的配置文件复制到 resources/main 目录下，如果当前目录下有子目录，也会将子目录复制过去
-sourceSets {
-	main {
-		resources {
+//sourceSets {
+//	main {
+//		resources {
 //			srcDir 'src/main/java/org/springframework/demo/'
-			srcDir 'src/main/java/org/springframework/demo/config/'
-			srcDir 'src/main/java/org/springframework/demo/web/server/tomcat/'
-		}
-	}
-}
+//			srcDir 'src/main/java/org/springframework/demo/config/'
+//			srcDir 'src/main/java/org/springframework/demo/web/server/tomcat/'
+//		}
+//	}
+//}
 
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.9.1')
@@ -52,8 +52,9 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok:1.18.30")
 
 	// spring jpa
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa:2.7.18'
-	implementation 'com.mysql:mysql-connector-j:8.2.0'}
+//	implementation 'org.springframework.boot:spring-boot-starter-data-jpa:2.7.18'
+//	implementation 'com.mysql:mysql-connector-j:8.2.0'
+}
 
 test {
     useJUnitPlatform()

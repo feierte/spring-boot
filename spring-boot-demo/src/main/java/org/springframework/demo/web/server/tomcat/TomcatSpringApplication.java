@@ -30,7 +30,7 @@ public class TomcatSpringApplication {
 
 	public static void main(String[] args) {
 		SpringApplicationBuilder builder = new SpringApplicationBuilder();
-		// todo: builder 中的 main 方法和 sources 方法有什么区别？
+		// todo: build
 		SpringApplication application = builder
 				.main(TomcatSpringApplication.class)
 				.sources(TomcatSpringApplication.class)
