@@ -377,13 +377,14 @@ public class SpringApplication {
 		// 如果没有默认的，就会读取 META-INF/spring.factories 中 key 为 `ApplicationContextFactory.class.getName()` 的实例，
 		// 回调 ApplicationContextFactory#create(WebApplicationType) 方法生成 ConfigurableEnvironment
 		ConfigurableEnvironment environment = getOrCreateEnvironment();
-		/**
-		 * 配置环境，其实就是增加 Environment 中的 PropertySource
+		/*
+		 * 配置环境，加载系统属性、环境变量等。
+		 * 其实就是增加 Environment 中的 PropertySource
 		 * 		访问顺序：命令行参数 -> ...... -> 默认属性
 		 * 默认属性（defaultProperties）可以这样设置：{@link org.springframework.boot.SpringApplicationTests#defaultCommandLineArgs()}
  		 */
 		configureEnvironment(environment, applicationArguments.getSourceArgs());
-		/**
+		/*
 		 * 作用是 将 Environment 中的属性源（Property Sources）进行适配和封装，使其支持新的 ConfigurationPropertySource 接口，
 		 * 从而为 SpringBoot 的类型安全配置属性（如 @ConfigurationProperties）提供更强大、更一致的属性查找能力。
 		 * <p>为 Spring Boot 的 @ConfigurationProperties 功能提供支持，将标准的 Environment 中的属性源

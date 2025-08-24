@@ -149,6 +149,7 @@ public abstract class LoggingSystem {
 	 * @return the logging system
 	 */
 	public static LoggingSystem get(ClassLoader classLoader) {
+		// 查看程序是否通过系统属性指定了日志系统
 		String loggingSystemClassName = System.getProperty(SYSTEM_PROPERTY);
 		if (StringUtils.hasLength(loggingSystemClassName)) {
 			if (NONE.equals(loggingSystemClassName)) {
@@ -156,6 +157,7 @@ public abstract class LoggingSystem {
 			}
 			return get(classLoader, loggingSystemClassName);
 		}
+		// 没有通过系统属性指定日志系统，则 spring.factories 定义的优先级自动创建日志系统（LoggingSystem）
 		LoggingSystem loggingSystem = SYSTEM_FACTORY.getLoggingSystem(classLoader);
 		Assert.state(loggingSystem != null, "No suitable logging system located");
 		return loggingSystem;

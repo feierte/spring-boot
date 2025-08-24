@@ -75,4 +75,12 @@
 	<logger name="org.springframework.boot.demo.web.controller.HelloController" level="WARN" additivity="false">
 		<appender-ref ref="console"/>
 	</logger>
+
+	<springProfile name="dev">
+
+	</springProfile>
+
+	<springProfile name="prod">
+
+	</springProfile>
 </configuration>

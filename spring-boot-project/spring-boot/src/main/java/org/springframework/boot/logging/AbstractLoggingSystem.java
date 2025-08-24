@@ -67,6 +67,7 @@ public abstract class AbstractLoggingSystem extends LoggingSystem {
 	}
 
 	private void initializeWithConventions(LoggingInitializationContext initializationContext, LogFile logFile) {
+		// 获取程序自定义的日志配置文件
 		String config = getSelfInitializationConfig();
 		if (config != null && logFile == null) {
 			// self initialization has occurred, reinitialize in case of property changes
@@ -80,6 +81,7 @@ public abstract class AbstractLoggingSystem extends LoggingSystem {
 			loadConfiguration(initializationContext, config, logFile);
 			return;
 		}
+		// 程序没有自定日志配置文件，加载默认配置
 		loadDefaults(initializationContext, logFile);
 	}
 
@@ -116,6 +118,10 @@ public abstract class AbstractLoggingSystem extends LoggingSystem {
 	 * Return the standard config locations for this system.
 	 * @return the standard config locations
 	 * @see #getSelfInitializationConfig()
+	 *
+	 * @apiNote 获取默认的日志配置文件，不同的日志实现的默认配置文件不一样。
+	 * 例如：logback 的默认配置文件是 "logback-test.groovy", "logback-test.xml", "logback.groovy", "logback.xml"等等；
+	 * 		log4j 的默认配置文件是 "log4j2.properties”，"log4j2.xml" 等等。
 	 */
 	protected abstract String[] getStandardConfigLocations();
 

@@ -5,7 +5,7 @@ spring:
 logging:
   level:
     root: info # 配置 root 日志级别为 info（即全局日志级别）
-    org.springframework.boot.demo.component.logging: debug # 配置 org.springframework.boot.demo.component.logging 这个包的日志级别为 debug
+    org.springframework.boot.demo.logging: debug # 配置 org.springframework.boot.demo.logging 这个包的日志级别为 debug
     org.springframework.boot.demo.web: info
   file: # springboot 默认将日志输出到控制台，如果想要日志输出到文件中需要配置 logging.file.name 和 logging.file.path，但这两个配置不能同时存在
     name: C://Tools//JavaTools//JetBrains//IdeaProjects//spring-projects//spring-boot//spring-boot-demo//logs//logging-demo.log # 日志文件名，如果只设置了 logging.file.path，则该默认为 spring.log

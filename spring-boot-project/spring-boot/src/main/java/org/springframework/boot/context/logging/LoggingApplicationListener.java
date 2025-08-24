@@ -234,6 +234,7 @@ public class LoggingApplicationListener implements GenericApplicationListener {
 	}
 
 	private void onApplicationStartingEvent(ApplicationStartingEvent event) {
+		// 创建日志系统 LoggingSystem，默认是 LogbackLoggingSystem
 		this.loggingSystem = LoggingSystem.get(event.getSpringApplication().getClassLoader());
 		this.loggingSystem.beforeInitialize();
 	}
@@ -288,7 +289,9 @@ public class LoggingApplicationListener implements GenericApplicationListener {
 	 * @param classLoader the classloader
 	 */
 	protected void initialize(ConfigurableEnvironment environment, ClassLoader classLoader) {
+		// 设置日志相关配置到系统属性中（SystemProperties）
 		getLoggingSystemProperties(environment).apply();
+		// 创建日志文件，存储日志的文件
 		this.logFile = LogFile.get(environment);
 		if (this.logFile != null) {
 			this.logFile.applyToSystemProperties();
