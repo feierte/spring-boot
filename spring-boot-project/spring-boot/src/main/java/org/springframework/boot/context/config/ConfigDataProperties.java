@@ -47,6 +47,8 @@ class ConfigDataProperties {
 
 	private static final Bindable<String[]> BINDABLE_STRING_ARRAY = Bindable.of(String[].class);
 
+	// 存储 spring.config.import 属性指定的配置文件，
+	// 例如 spring.config.import=classpath:extra.properties,optional:file:./custom.properties
 	private final List<ConfigDataLocation> imports;
 
 	private final Activate activate;

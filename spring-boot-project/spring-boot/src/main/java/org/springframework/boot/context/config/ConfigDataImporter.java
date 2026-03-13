@@ -38,8 +38,8 @@ import org.springframework.core.log.LogMessage;
  * @author Phillip Webb
  * @author Madhura Bhave
  *
- * @apiNote ConfigDataImporter 的主要作用是解析并加载 ConfigData，
- * 这些数据随后会被添加到 Spring 的环境（Environment）中。
+ * @apiNote ConfigDataImporter 的主要作用是解析并加载 ConfigData，这些数据随后会被添加到 Spring 的环境（Environment）中。
+ * 管理导入的配置位置，支持递归导入（类似于 spring.config.import）。
  */
 class ConfigDataImporter {
 

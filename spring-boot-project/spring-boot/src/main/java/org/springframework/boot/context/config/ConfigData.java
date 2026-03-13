@@ -39,6 +39,8 @@ import org.springframework.util.Assert;
  * @since 2.4.0
  * @see ConfigDataLocationResolver
  * @see ConfigDataLoader
+ *
+ * @apiNote 包含加载后的配置数据（一组 PropertySource<?>）以及关联的 profile 信息。
  */
 public final class ConfigData {
 

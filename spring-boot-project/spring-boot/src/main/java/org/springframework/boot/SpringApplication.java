@@ -374,8 +374,6 @@ public class SpringApplication {
 			DefaultBootstrapContext bootstrapContext, ApplicationArguments applicationArguments) {
 		// Create and configure the environment
 		// 创建出 ConfigurableEnvironment
-		// 如果没有默认的，就会读取 META-INF/spring.factories 中 key 为 `ApplicationContextFactory.class.getName()` 的实例，
-		// 回调 ApplicationContextFactory#create(WebApplicationType) 方法生成 ConfigurableEnvironment
 		ConfigurableEnvironment environment = getOrCreateEnvironment();
 		/*
 		 * 配置环境，加载系统属性、环境变量等。
@@ -396,6 +394,7 @@ public class SpringApplication {
 		DefaultPropertiesPropertySource.moveToEnd(environment);
 		Assert.state(!environment.containsProperty("spring.main.environment-prefix"),
 				"Environment prefix cannot be set via properties.");
+		// 环境中的属性绑定到 SpringApplication 对象上
 		bindToSpringApplication(environment);
 		if (!this.isCustomEnvironment) {
 			EnvironmentConverter environmentConverter = new EnvironmentConverter(getClassLoader());
@@ -508,9 +507,11 @@ public class SpringApplication {
 		if (this.environment != null) {
 			return this.environment;
 		}
+		// 如果没有默认的，就会读取 META-INF/spring.factories 中 key 为 `ApplicationContextFactory.class.getName()` 的实例，
+		// 回调 ApplicationContextFactory#create(WebApplicationType) 方法生成 ConfigurableEnvironment
 		ConfigurableEnvironment environment = this.applicationContextFactory.createEnvironment(this.webApplicationType);
 		if (environment == null && this.applicationContextFactory != ApplicationContextFactory.DEFAULT) {
-			// servlet 环境创建的是 ApplicationServletEnvironment
+			// servlet 环境（web 项目）创建的是 ApplicationServletEnvironment
 			environment = ApplicationContextFactory.DEFAULT.createEnvironment(this.webApplicationType);
 		}
 		return (environment != null) ? environment : new ApplicationEnvironment();
@@ -547,10 +548,10 @@ public class SpringApplication {
 		// springboot 设置了默认属性（defaultProperties）
 		if (!CollectionUtils.isEmpty(this.defaultProperties)) {
 			// 将 defaultProperties 适配为 PropertySource，并放到环境中的最后位置，
-			// 如果环境中已经有了 defaultProperties，先合并，然后在存放到环境中的最后位置
+			// 如果环境中已经有了 defaultProperties，先合并，然后在存放到环境中的最后位置（优先级最低）
 			DefaultPropertiesPropertySource.addOrMerge(this.defaultProperties, sources);
 		}
-		// 将 main 方法的参数 args 封装成 SimpleCommandLinePropertySource，放到环境中的最前位置
+		// 将 main 方法的参数 args 封装成 SimpleCommandLinePropertySource，放到环境中的最前位置（优先级最高）
 		if (this.addCommandLineProperties && args.length > 0) {
 			String name = CommandLinePropertySource.COMMAND_LINE_PROPERTY_SOURCE_NAME;
 			if (sources.contains(name)) {

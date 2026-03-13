@@ -45,6 +45,8 @@ import org.springframework.boot.logging.DeferredLogFactory;
  * @author Phillip Webb
  * @author Madhura Bhave
  * @since 2.4.0
+ *
+ * @apiNote 配置文件加载器。负责从 ConfigDataResource 实际读取数据，返回 ConfigData 对象。
  */
 public interface ConfigDataLoader<R extends ConfigDataResource> {
 

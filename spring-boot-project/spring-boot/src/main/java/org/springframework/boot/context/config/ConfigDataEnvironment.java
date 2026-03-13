@@ -23,6 +23,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.swing.Spring;
+
 import org.apache.commons.logging.Log;
 
 import org.springframework.boot.BootstrapRegistry.InstanceSupplier;
@@ -86,7 +88,11 @@ class ConfigDataEnvironment {
 
 	/**
 	 * Default search locations used if not {@link #LOCATION_PROPERTY} is found.
+	 * 默认的配置文件搜索路径，优先级从低到高，即后面的会覆盖前面的；
+	 * 还可以通过 spring.config.location 或 spring.config.additional-location 自定义搜索路径
 	 */
+	// “file:./config/*/” SpringBoot 2.4+ 支持，表示当前目录下的 config 子目录的任意直接子目录
+	// 注意：如果是打包为 Jar 运行，file:./ 路径指的是 Jar 包所在的当前目录；如果是在 IDE 中运行，则指项目根目录。
 	static final ConfigDataLocation[] DEFAULT_SEARCH_LOCATIONS;
 	static {
 		List<ConfigDataLocation> locations = new ArrayList<>();
@@ -149,12 +155,14 @@ class ConfigDataEnvironment {
 			.orElse(ConfigDataNotFoundAction.FAIL);
 		this.bootstrapContext = bootstrapContext;
 		this.environment = environment;
+		// 创建配置文件位置解析器
 		// 从 spring.factories 中获取 ConfigDataLocationResolver 实现。(可以自己实现，扩展点之一)
 		// 同时这里面会传入 boostrapContext/resourceLoader/Binder 等参数用于构造参数反射
 		this.resolvers = createConfigDataLocationResolvers(logFactory, bootstrapContext, binder, resourceLoader);
 		this.additionalProfiles = additionalProfiles;
 		this.environmentUpdateListener = (environmentUpdateListener != null) ? environmentUpdateListener
 				: ConfigDataEnvironmentUpdateListener.NONE;
+		// 创建配置文件加载器
 		// 初始化 loaders，从 spring.factories 中获取所有的 ConfigDataLoader 并用反射进行实例化
 		this.loaders = new ConfigDataLoaders(logFactory, bootstrapContext, resourceLoader.getClassLoader());
 		// 将环境中已有的属性源以及需要导入配置的位置封装为 contributors
